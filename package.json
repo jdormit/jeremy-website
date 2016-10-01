@@ -1,12 +1,12 @@
 {
   "name": "jeremy-website",
   "version": "0.0.0",
-  "description": "Jeremy Dormitzer's personal website.",
-    "scripts": {
+  "description": "Jeremy Dormitzer's personal website",
+  "scripts": {
     "start": "jus serve",
     "build": "jus compile . ./dist",
-    "deploy": "npm run build && surge ./dist",
-   },
+    "deploy": "npm run build && surge ./dist"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jdormit/jeremy-website.git"
