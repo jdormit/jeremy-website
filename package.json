@@ -5,7 +5,7 @@
   "scripts": {
     "start": "jus serve",
     "build": "jus compile . ./dist",
-    "deploy": "npm run build && surge ./dist"
+    "deploy": "npm run build && surge ./dist jeremydormitzer.com"
   },
   "repository": {
     "type": "git",
