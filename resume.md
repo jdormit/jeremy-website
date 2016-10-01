@@ -89,3 +89,5 @@
 ## Other Work Experience
 - Server - Olive Garden - May 2015 - May 2016
 - Barista - Bon Appetit - May 2014 - May 2015
+
+# **References available upon request**
