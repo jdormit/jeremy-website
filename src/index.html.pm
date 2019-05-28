@@ -1,6 +1,8 @@
 #lang pollen
 
-◊image[#:src "images/jeremy.jpg" #:width "300px"]
+◊title{Jeremy Dormitzer}
+
+◊image[#:class "float-left" #:src "images/jeremy.jpg" #:height "512px"]
 
 Hi! I’m Jeremy Dormitzer. I’m a full-stack software engineer from Boston, MA.
 
