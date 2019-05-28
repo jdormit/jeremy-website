@@ -1,0 +1,2 @@
+* Jeremy Dormitzer's personal website
+This is my personal website. It's written using the [[https://docs.racket-lang.org/pollen/index.html][Pollen static site generator]].
