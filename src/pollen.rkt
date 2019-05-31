@@ -16,6 +16,11 @@
    (lambda (kws kw-args . elements)
      (txexpr 'h1 (zip-kws kws kw-args) elements))))
 
+(define section
+  (make-keyword-procedure
+   (lambda (kws kw-args . elements)
+     (txexpr 'h2 (zip-kws kws kw-args) elements))))
+
 (define link
   (make-keyword-procedure
    (lambda (kws kw-args . elements)
@@ -25,3 +30,13 @@
   (make-keyword-procedure
    (lambda (kws kw-args . elements)
      (txexpr 'img (zip-kws kws kw-args) elements))))
+
+(define codeblock
+  (make-keyword-procedure
+   (lambda (kws kw-args . elements)
+     (let ((new-kws (map (lambda (kw)
+			   (if (eq? kw '#:lang) '#:class kw))
+			 kws)))
+       (txexpr
+	'pre empty
+	(list (txexpr 'code (zip-kws new-kws kw-args) elements)))))))

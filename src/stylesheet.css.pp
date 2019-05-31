@@ -2,6 +2,7 @@
 
 ◊(define navbar-height 60)
 ◊(define serif-font-stack "'Century Supra', 'Palatino Linotype', Palatino, Palladio, 'URW Palladio L', 'Book Antiqua', Baskerville, 'Bookman Old Style', 'Bitstream Charter', 'Nimbus Roman No9 L', Garamond, 'Apple Garamond', 'ITC Garamond Narrow', 'New Century Schoolbook', 'Century Schoolbook', 'Century Schoolbook L', Georgia, serif")
+◊(define monospace-font-stack "'Triplicate Code', SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace")
 ◊(define body-color "#404040")
 ◊(define link-color "royalblue")
 ◊(define link-hover-color "midnightblue")
@@ -42,6 +43,15 @@ a:visited {
 
 a:hover {
     color: ◊|link-hover-color|;
+}
+
+code, pre {
+    font-family: ◊|monospace-font-stack|;
+    font-size: 20px;
+}
+
+pre > code.hljs {
+    padding: 1.5em;
 }
 
 .main {
