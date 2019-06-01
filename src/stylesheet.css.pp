@@ -71,3 +71,7 @@ pre > code.hljs {
     float: left;
     margin-right: 1em;
 }
+
+.section-header {
+    margin-top: 2em;
+}

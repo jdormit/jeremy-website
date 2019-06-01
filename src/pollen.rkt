@@ -11,6 +11,12 @@
 (define (zip-kws kws kw-args)
   (map list (map string->symbol (map keyword->string kws)) kw-args))
 
+(define (with-class attrs cls)
+  (let ((existing-cls (assoc 'class attrs)))
+    (dict-set attrs 'class (if existing-cls
+			       (list (string-append (cadr existing-cls) " " cls))
+			       (list cls)))))
+
 (define title
   (make-keyword-procedure
    (lambda (kws kw-args . elements)
@@ -19,7 +25,7 @@
 (define section
   (make-keyword-procedure
    (lambda (kws kw-args . elements)
-     (txexpr 'h2 (zip-kws kws kw-args) elements))))
+     (txexpr 'h2 (with-class (zip-kws kws kw-args) "section-header") elements))))
 
 (define link
   (make-keyword-procedure

@@ -3,8 +3,6 @@
 ◊title{A DSL for Music}
 ◊published-date[2018 8 5]
 
-◊;; TODO add author and date
-
 ◊section{Haskell School of Music}
 
 I recently discovered Haskell School of Music. It’s a book about algorithmic music, which is awesome because: a) I’ve been obsessed with procedural generation for years and b) I like music as much as I like programming. So you can imagine my excitement when I discovered that someone had written a textbook combining my favorite areas of study.
