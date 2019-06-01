@@ -1,5 +1,5 @@
 #lang racket
-(require pollen/decode txexpr)
+(require pollen/decode txexpr gregor)
 (provide (all-defined-out))
 
 (define (root . elements)
@@ -40,3 +40,12 @@
        (txexpr
 	'pre empty
 	(list (txexpr 'code (zip-kws new-kws kw-args) elements)))))))
+
+(define (tags . taglist)
+  ;; TODO make these links to an index page for each tag
+  (txexpr 'span '((class "tags")) `("Tagged " ,(string-join taglist ", "))))
+
+(define (published-date year month day)
+  (let ((publish-date (date year month day)))
+    (txexpr
+     'span '((class "published-date")) `("Posted on " ,(~t publish-date "MMMM d, y")))))
