@@ -8,8 +8,19 @@
 	<link rel="stylesheet" type="text/css" href="/stylesheet.css" />
     </head>
     <body>
-	<div class="main">
-	    ◊(->html doc)
+	<div class="site">
+	    <header>
+		<nav>
+		    <ul class="navigation">
+			<!-- TODO refactor these into a function to make it easy to add new items -->
+			<li><a href="/">home</a></li>
+			<li><a href="/blog">blog</a></li>
+		    </ul>
+		</nav>
+	    </header>
+	    <div class="main">
+		◊(->html doc)
+	    </div>
 	</div>
 	<footer>
 	    © Jeremy Dormitzer 2019
