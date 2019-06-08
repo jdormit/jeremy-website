@@ -1,3 +1,5 @@
+#lang pollen
+
 @font-face {
     font-family: 'Century Supra';
     src: url('Century Supra T3 Regular.otf') format('opentype'),
