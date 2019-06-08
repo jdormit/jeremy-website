@@ -1,4 +1,9 @@
 #lang pollen
+◊(require racket/string)
 
 index.html
-blog
+◊`(blog
+   ,@(map string->symbol
+	  (remove "index.html"
+		  (filter (lambda (p) (string-suffix? p ".html"))
+			  (map path->string (directory-list "blog"))))))
