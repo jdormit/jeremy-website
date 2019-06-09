@@ -1,12 +1,16 @@
 #lang racket
-(require pollen/decode txexpr gregor)
+(require pollen/core pollen/decode txexpr gregor)
 (provide (all-defined-out))
 
 (define (root . elements)
-  (txexpr 'div
-          '((class "content"))
-          (decode-elements elements
-                           #:txexpr-elements-proc decode-paragraphs)))
+  (let ((the-title (select-from-metas 'title (current-metas)))
+	(published (select-from-metas 'published (current-metas))))
+    (txexpr 'div
+	    '((class "content"))
+	    `(,(when/splice the-title (title the-title))
+	      ,(when/splice published (published-date published))
+	      ,@(decode-elements elements
+				 #:txexpr-elements-proc decode-paragraphs)))))
 
 (define (zip-kws kws kw-args)
   (map list (map string->symbol (map keyword->string kws)) kw-args))
@@ -22,7 +26,7 @@
    (lambda (kws kw-args . elements)
      (txexpr 'h1 (zip-kws kws kw-args) elements))))
 
-(define section
+(define heading
   (make-keyword-procedure
    (lambda (kws kw-args . elements)
      (txexpr 'h2 (with-class (zip-kws kws kw-args) "section-header") elements))))
@@ -51,7 +55,7 @@
   ;; TODO make these links to an index page for each tag
   (txexpr 'span '((class "tags")) `("Tagged " ,(string-join taglist ", "))))
 
-(define (published-date year month day)
-  (let ((publish-date (date year month day)))
+(define (published-date date-str)
+  (let ((publish-date (iso8601->date date-str)))
     (txexpr
      'span '((class "published-date")) `("Posted on " ,(~t publish-date "MMMM d, y")))))

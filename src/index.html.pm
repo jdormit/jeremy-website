@@ -1,6 +1,6 @@
 #lang pollen
 
-◊title{Jeremy Dormitzer}
+◊(define-meta title "Jeremy Dormitzer")
 
 ◊image[#:class "float-left" #:src "images/jeremy.jpg" #:height "512px"]
 

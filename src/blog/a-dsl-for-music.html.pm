@@ -1,9 +1,9 @@
 #lang pollen
 
-◊title{A DSL for Music}
-◊published-date[2018 8 5]
+◊(define-meta title "A DSL for Music")
+◊(define-meta published "2018-08-05")
 
-◊section{Haskell School of Music}
+◊heading{Haskell School of Music}
 
 I recently discovered Haskell School of Music. It’s a book about algorithmic music, which is awesome because: a) I’ve been obsessed with procedural generation for years and b) I like music as much as I like programming. So you can imagine my excitement when I discovered that someone had written a textbook combining my favorite areas of study.
 
@@ -13,7 +13,7 @@ I like Haskell, but I want to write music in Clojure. Why? First of all, because
 
 Before we can explore what a DSL for music would look like, we need to understand how HSoM represents music as data.
 
-◊section{Music as data}
+◊heading{Music as data}
 
 HSoM breaks music down into its component pieces. It represents music using Haskell data structures:
 
@@ -49,7 +49,7 @@ But as powerful as this data type is, I wouldn’t call it a domain-specific lan
 
 Here’s where Clojure comes in.
 
-◊section{A DSL for music with Clojure}
+◊heading{A DSL for music with Clojure}
 
 What would a domain-specific language for music look like in Clojure? I found inspiration in the HTML templating library ◊link[#:href "https://github.com/weavejester/hiccup"]{Hiccup}. Hiccup represents HTML documents (a graph of complex nested nodes, just like music values) using Clojure vectors, like so:
 
@@ -127,7 +127,7 @@ Furthermore, because Clojure is dynamically typed and supports ◊link[#:href "h
 
 Like the Hiccup vectors, our music vectors blur the boundary between a DSL and a data structure. The vectors are expressive enough to represent any musical concept, but can still be passed around and operated on by normal Clojure functions. As an added advantage, the vectors look similar enough to the HSoM data structures that I can easily follow along with the textbook using Clojure and Overtone.
 
-◊section{What's next}
+◊heading{What's next}
 
 So I have a way to represent music in Clojure now. What’s next? Haskell School of Music ships with a library called Euterpea that knows how to turn the Music data structure into actual sound. So the next step for me is probably porting something like that to Clojure. I’m hoping to offload most of that work to Overtone. After that, I’ll explore algorithmic composition using the techniques outlined in HSoM. Stay tuned!
 

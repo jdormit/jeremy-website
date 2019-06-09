@@ -14,9 +14,10 @@
 ◊(define (get-posts)
    (children 'blog))
 
+◊title{}
+
 ◊for/splice[((post (get-posts)))]{
     ◊let[((src (get-source (path->string (path->complete-path (symbol->string post))))))]{
-    ◊(string-append "blog/" (symbol->string post))
-        ◊;◊link[#:href ◊post]{◊(select 'h1 src)}
+        ◊link[#:href (symbol->string post)]{◊section{◊(select 'h1 src)}}
     }
 }
