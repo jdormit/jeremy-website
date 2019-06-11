@@ -13,9 +13,6 @@
 body {
     height: 100%;
     max-width: 1920px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     font-size: 21px;
     font-family: ◊|serif-font-stack|;
     color: ◊|body-color|;
@@ -64,6 +61,9 @@ pre > code.hljs {
 
 .site {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .main {
@@ -71,6 +71,7 @@ pre > code.hljs {
     grid-template-columns: repeat(12, 1fr);
     grid-auto-rows: auto;
     grid-gap: 1rem;
+    flex: 3;
 }
 
 .content {

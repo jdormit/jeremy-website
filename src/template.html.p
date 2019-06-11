@@ -21,10 +21,10 @@
 	    <div class="main">
 		◊(->html doc)
 	    </div>
+	    <footer>
+		© Jeremy Dormitzer 2019
+	    </footer>
 	</div>
-	<footer>
-	    © Jeremy Dormitzer 2019
-	</footer>
 	<script src="/js/highlight/highlight.pack.js"></script> 
 	<script>hljs.initHighlightingOnLoad();</script>
     </body>
