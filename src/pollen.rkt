@@ -1,6 +1,15 @@
 #lang racket
-(require pollen/core pollen/decode txexpr gregor)
+
+(require pollen/core
+	 pollen/file
+	 pollen/decode
+	 txexpr
+	 gregor)
+
 (provide (all-defined-out))
+
+(define (list-range lst start end)
+  (take (drop lst start) (- end start)))
 
 (define (root . elements)
   (let ((the-title (select-from-metas 'title (current-metas)))
@@ -59,3 +68,13 @@
   (let ((publish-date (iso8601->date date-str)))
     (txexpr
      'span '((class "published-date")) `("Posted on " ,(~t publish-date "MMMM d, y")))))
+
+(define (make-excerpt doc)
+  (let ((elts (get-elements doc)))
+    (txexpr 'div '((class "excerpt")) (list-range elts 2 5))))
+
+(define (excerpt post)
+  (let ((src (get-source (path->string (path->complete-path (symbol->string post))))))
+    (if (select-from-metas 'excerpt src)
+	(select-from-metas 'excerpt src)
+	(make-excerpt (get-doc src)))))

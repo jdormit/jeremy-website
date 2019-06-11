@@ -14,10 +14,13 @@
 ◊(define (get-posts)
    (children 'blog))
 
-◊title{}
-
 ◊for/splice[((post (get-posts)))]{
     ◊let[((src (get-source (path->string (path->complete-path (symbol->string post))))))]{
-        ◊link[#:href (symbol->string post)]{◊section{◊(select 'h1 src)}}
+        ◊div{
+	    ◊title{◊(select 'h1 src)}
+	    ◊published-date[(select-from-metas 'published src)]
+	    ◊excerpt[post]
+	    ◊link[#:href (symbol->string post)]{Read more...}
+	}
     }
 }
