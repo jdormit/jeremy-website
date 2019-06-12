@@ -3,6 +3,7 @@
 ◊(require pollen/core
           pollen/pagetree
           pollen/file
+	  gregor
           racket/path
 	  racket/list)
 
@@ -14,7 +15,9 @@
 ◊(current-pagetree ptree)
 
 ◊(define (get-posts)
-   (children 'blog))
+   (sort (children 'blog)
+         date>?
+	 #:key post-published-date))
 
 ◊(define (render-post post)
    (let ((src (get-source (path->string (path->complete-path (symbol->string post))))))

@@ -11,6 +11,13 @@
 (define (list-range lst start end)
   (take (drop lst start) (- end start)))
 
+(define (post->source post)
+  (get-source (path->string (path->complete-path (symbol->string post)))))
+
+(define (post-published-date post)
+  (let ((src (post->source post)))
+    (iso8601->date (select-from-metas 'published src))))
+
 (define (root . elements)
   (let ((the-title (select-from-metas 'title (current-metas)))
 	(published (select-from-metas 'published (current-metas))))
@@ -75,7 +82,7 @@
     (txexpr 'div '((class "excerpt")) (list-range elts 2 5))))
 
 (define (excerpt post)
-  (let ((src (get-source (path->string (path->complete-path (symbol->string post))))))
+  (let ((src (post->source post)))
     (if (select-from-metas 'excerpt src)
 	(select-from-metas 'excerpt src)
 	(make-excerpt (get-doc src)))))
