@@ -50,6 +50,11 @@
    (lambda (kws kw-args . elements)
      (txexpr 'img (zip-kws kws kw-args) elements))))
 
+(define header-image
+  (make-keyword-procedure
+   (lambda (kws kw-args . elements)
+     (txexpr 'img (with-class (zip-kws kws kw-args) "header-image") elements))))
+
 (define codeblock
   (make-keyword-procedure
    (lambda (kws kw-args . elements)
@@ -59,10 +64,6 @@
        (txexpr
 	'pre empty
 	(list (txexpr 'code (zip-kws new-kws kw-args) elements)))))))
-
-(define (tags . taglist)
-  ;; TODO make these links to an index page for each tag
-  (txexpr 'span '((class "tags")) `("Tagged " ,(string-join taglist ", "))))
 
 (define (published-date date-str)
   (let ((publish-date (iso8601->date date-str)))
@@ -78,3 +79,6 @@
     (if (select-from-metas 'excerpt src)
 	(select-from-metas 'excerpt src)
 	(make-excerpt (get-doc src)))))
+
+(define (divider)
+  (txexpr 'hr '((class "divider"))))
