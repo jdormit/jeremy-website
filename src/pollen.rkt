@@ -81,4 +81,4 @@
 	(make-excerpt (get-doc src)))))
 
 (define (divider)
-  (txexpr 'hr '((class "divider"))))
+  (txexpr 'div '((class "divider"))))

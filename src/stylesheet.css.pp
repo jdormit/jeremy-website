@@ -9,7 +9,7 @@
 ◊(define link-hover-color "midnightblue")
 ◊(define link-visited-color "purple")
 ◊(define nav-hover-color "#707070")
-◊(define divider-color "#EFEFEF")
+◊(define divider-color "#CDCDCD")
 
 body {
     height: 100%;
@@ -45,14 +45,6 @@ a {
 
 img {
     width: 100%;
-}
-
-hr {
-    background-color: ◊|divider-color|;
-    border-color: ◊|divider-color|;
-    color: ◊|divider-color|;
-    margin-top: 2.5em;
-    margin-bottom: 2.5em;
 }
 
 a:visited {
@@ -122,4 +114,10 @@ ul.navigation > li > a:hover {
 
 .section-header {
     margin-top: 2em;
+}
+
+div.divider {
+    margin-top: 2em;
+    margin-bottom: 2em;
+    border-top: 1px solid ◊|divider-color|;
 }
