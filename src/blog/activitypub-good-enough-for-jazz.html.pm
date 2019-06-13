@@ -1,6 +1,6 @@
 #lang pollen
 
-◊(define-meta title "ActivityPub: good enough for jazz")
+◊(define-meta title "ActivityPub: Good enough for jazz")
 ◊(define-meta published "2019-01-07")
 
 ◊heading-image[#:src "/images/activitypub.png"]
