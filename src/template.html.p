@@ -3,7 +3,7 @@
        (select 'h1 doc)
        "Jeremy Dormitzer"))
 
-<html>
+<html lang="en">
     <head>
 	<meta charset="utf-8">
 	<title>◊|the-title|</title>

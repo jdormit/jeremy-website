@@ -100,6 +100,7 @@ pre > code.hljs {
     margin-top: ◊|navbar-height|px;
     grid-column: 5 / 10;
     hyphens: auto;
+    max-width: 100%;
 }
 
 ul.navigation {
@@ -137,4 +138,19 @@ div.divider {
     margin-top: 2em;
     margin-bottom: 2em;
     border-top: 1px solid ◊|divider-color|;
+}
+
+@media screen and (max-width: 720px) {
+    .content {
+	grid-column: 2 / 12;
+    }
+
+    .float-left {
+	float: none;
+	margin-right: auto;
+    }
+
+    ul, ol {
+	margin: 0 0 1.5em 1em;
+    }
 }
