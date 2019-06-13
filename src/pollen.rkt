@@ -89,3 +89,8 @@
 
 (define (divider)
   (txexpr 'div '((class "divider"))))
+
+(define italic
+  (make-keyword-procedure
+   (lambda (kws kw-args . elements)
+     (txexpr 'em (zip-kws kws kw-args) elements))))

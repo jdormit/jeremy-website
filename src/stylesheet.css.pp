@@ -10,6 +10,8 @@
 ◊(define link-visited-color "purple")
 ◊(define nav-hover-color "#707070")
 ◊(define divider-color "#CDCDCD")
+◊(define blockquote-border-color "#CCC")
+◊(define blockquote-background-color "#F9F9F9")
 
 body {
     height: 100%;
@@ -60,6 +62,21 @@ code, pre {
     font-size: 20px;
 }
 
+ul, ol {
+    margin: 0 0 1.5em 3em;
+}
+
+li {
+    margin-top: 1em;
+}
+
+blockquote {
+	margin: 1em 1.5em;
+	border-left: 10px solid ◊|blockquote-border-color|;
+	background: ◊|blockquote-background-color|;
+	padding: 1.3em 0.5em;
+}
+
 pre > code.hljs {
     padding: 1.5em;
 }
@@ -81,7 +98,7 @@ pre > code.hljs {
 
 .content {
     margin-top: ◊|navbar-height|px;
-    grid-column: 4 / 10;
+    grid-column: 5 / 10;
     hyphens: auto;
 }
 

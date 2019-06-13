@@ -28,3 +28,5 @@
 
 ◊(let ((rendered-posts (add-between (map render-post (get-posts)) (divider))))
    `(div ,@rendered-posts))
+
+◊(define-meta browser-title "Jeremy Dormitzer's blog")
