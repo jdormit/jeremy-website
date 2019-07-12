@@ -1,17 +1,14 @@
 # Highlight.js
 
-[![Build Status](https://travis-ci.org/highlightjs/highlight.js.svg?branch=master)](https://travis-ci.org/highlightjs/highlight.js) [![Greenkeeper badge](https://badges.greenkeeper.io/highlightjs/highlight.js.svg)](https://greenkeeper.io/)
+Highlight.js — это инструмент для подсветки синтаксиса, написанный на JavaScript. Он работает
+и в браузере, и на сервере. Он работает с практически любой HTML разметкой, не
+зависит от каких-либо фреймворков и умеет автоматически определять язык.
 
-Highlight.js is a syntax highlighter written in JavaScript. It works in
-the browser as well as on the server. It works with pretty much any
-markup, doesn’t depend on any framework, and has automatic language
-detection.
 
-## Getting Started
+## Начало работы
 
-The bare minimum for using highlight.js on a web page is linking to the
-library along with one of the styles and calling
-[`initHighlightingOnLoad`][1]:
+Минимум, что нужно сделать для использования highlight.js на веб-странице — это
+подключить библиотеку, CSS-стили и вызывать [`initHighlightingOnLoad`][1]:
 
 ```html
 <link rel="stylesheet" href="/path/to/styles/default.css">
@@ -19,39 +16,31 @@ library along with one of the styles and calling
 <script>hljs.initHighlightingOnLoad();</script>
 ```
 
-This will find and highlight code inside of `<pre><code>` tags; it tries
-to detect the language automatically. If automatic detection doesn’t
-work for you, you can specify the language in the `class` attribute:
+Библиотека найдёт и раскрасит код внутри тегов `<pre><code>`, попытавшись
+автоматически определить язык. Когда автоопределение не срабатывает, можно явно
+указать язык в атрибуте class:
 
 ```html
 <pre><code class="html">...</code></pre>
 ```
 
-The list of supported language classes is available in the [class
-reference][2].  Classes can also be prefixed with either `language-` or
-`lang-`.
+Список поддерживаемых классов языков доступен в [справочнике по классам][2].
+Класс также можно предварить префиксами `language-` или `lang-`.
 
-To make arbitrary text look like code, but without highlighting, use the
-`plaintext` class:
-
-```html
-<pre><code class="plaintext">...</code></pre>
-```
-
-To disable highlighting altogether use the `nohighlight` class:
+Чтобы отключить подсветку для какого-то блока, используйте класс `nohighlight`:
 
 ```html
 <pre><code class="nohighlight">...</code></pre>
 ```
 
-## Custom Initialization
+## Инициализация вручную
 
-When you need a bit more control over the initialization of
-highlight.js, you can use the [`highlightBlock`][3] and [`configure`][4]
-functions. This allows you to control *what* to highlight and *when*.
+Чтобы иметь чуть больше контроля за инициализацией подсветки, вы можете
+использовать функции [`highlightBlock`][3] и [`configure`][4]. Таким образом
+можно управлять тем, *что* и *когда* подсвечивать.
 
-Here’s an equivalent way to calling [`initHighlightingOnLoad`][1] using
-vanilla JS:
+Вот пример инициализации, эквивалентной вызову [`initHighlightingOnLoad`][1], но
+с использованием `document.addEventListener`:
 
 ```js
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -61,9 +50,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 ```
 
-You can use any tags instead of `<pre><code>` to mark up your code. If
-you don't use a container that preserves line breaks you will need to
-configure highlight.js to use the `<br>` tag:
+Вы можете использовать любые теги разметки вместо `<pre><code>`. Если
+используете контейнер, не сохраняющий переводы строк, вам нужно сказать
+highlight.js использовать для них тег `<br>`:
 
 ```js
 hljs.configure({useBR: true});
@@ -73,15 +62,15 @@ document.querySelectorAll('div.code').forEach((block) => {
 });
 ```
 
-For other options refer to the documentation for [`configure`][4].
+Другие опции можно найти в документации функции [`configure`][4].
 
 
 ## Web Workers
 
-You can run highlighting inside a web worker to avoid freezing the browser
-window while dealing with very big chunks of code.
+Подсветку можно запустить внутри web worker'а, чтобы окно
+браузера не подтормаживало при работе с большими кусками кода.
 
-In your main script:
+В основном скрипте:
 
 ```js
 addEventListener('load', () => {
@@ -92,7 +81,7 @@ addEventListener('load', () => {
 });
 ```
 
-In worker.js:
+В worker.js:
 
 ```js
 onmessage = (event) => {
@@ -103,80 +92,45 @@ onmessage = (event) => {
 ```
 
 
-## Getting the Library
+## Установка библиотеки
 
-You can get highlight.js as a hosted, or custom-build, browser script or
-as a server module. Right out of the box the browser script supports
-both AMD and CommonJS, so if you wish you can use RequireJS or
-Browserify without having to build from source. The server module also
-works perfectly fine with Browserify, but there is the option to use a
-build specific to browsers rather than something meant for a server.
-Head over to the [download page][5] for all the options.
+Highlight.js можно использовать в браузере прямо с CDN хостинга или скачать
+индивидуальную сборку, а также установив модуль на сервере. На
+[странице загрузки][5] подробно описаны все варианты.
 
-**Don't link to GitHub directly.** The library is not supposed to work straight
-from the source, it requires building. If none of the pre-packaged options
-work for you refer to the [building documentation][6].
+**Не подключайте GitHub напрямую.** Библиотека не предназначена для
+использования в виде исходного кода, а требует отдельной сборки. Если вам не
+подходит ни один из готовых вариантов, читайте [документацию по сборке][6].
 
-**The CDN-hosted package doesn't have all the languages.** Otherwise it'd be
-too big. If you don't see the language you need in the ["Common" section][5],
-it can be added manually:
+**Файл на CDN содержит не все языки.** Иначе он будет слишком большого размера.
+Если нужного вам языка нет в [категории "Common"][5], можно дообавить его
+вручную:
 
 ```html
-<script
- charset="UTF-8"
- src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/go.min.js"></script>
 ```
 
-**On Almond.** You need to use the optimizer to give the module a name. For
-example:
+**Про Almond.** Нужно задать имя модуля в оптимизаторе, например:
 
-```bash
+```
 r.js -o name=hljs paths.hljs=/path/to/highlight out=highlight.js
 ```
 
 
-### CommonJS
+## Лицензия
 
-You can import Highlight.js as a CommonJS-module:
+Highlight.js распространяется под лицензией BSD. Подробнее читайте файл
+[LICENSE][7].
 
-```bash
-npm install highlight.js --save
-```
 
-In your application:
+## Ссылки
 
-```js
-import hljs from 'highlight.js';
-```
+Официальный сайт билиотеки расположен по адресу <https://highlightjs.org/>.
 
-The default import imports all languages! Therefore it is likely to be more efficient to import only the library and the languages you need:
-
-```js
-import hljs from 'highlight.js/lib/highlight';
-import javascript from 'highlight.js/lib/languages/javascript';
-hljs.registerLanguage('javascript', javascript);
-```
-
-To set the syntax highlighting style, if your build tool processes CSS from your JavaScript entry point, you can import the stylesheet directly into your CommonJS-module:
-
-```js
-import hljs from 'highlight.js/lib/highlight';
-import 'highlight.js/styles/github.css';
-```
-
-## License
-
-Highlight.js is released under the BSD License. See [LICENSE][7] file
-for details.
-
-## Links
-
-The official site for the library is at <https://highlightjs.org/>.
-
-Further in-depth documentation for the API and other topics is at
+Более подробная документация по API и другим темам расположена на
 <http://highlightjs.readthedocs.io/>.
 
-Authors and contributors are listed in the [AUTHORS.en.txt][8] file.
+Авторы и контрибьюторы перечислены в файле [AUTHORS.ru.txt][8] file.
 
 [1]: http://highlightjs.readthedocs.io/en/latest/api.html#inithighlightingonload
 [2]: http://highlightjs.readthedocs.io/en/latest/css-classes-reference.html
@@ -185,4 +139,4 @@ Authors and contributors are listed in the [AUTHORS.en.txt][8] file.
 [5]: https://highlightjs.org/download/
 [6]: http://highlightjs.readthedocs.io/en/latest/building-testing.html
 [7]: https://github.com/highlightjs/highlight.js/blob/master/LICENSE
-[8]: https://github.com/highlightjs/highlight.js/blob/master/AUTHORS.en.txt
+[8]: https://github.com/highlightjs/highlight.js/blob/master/AUTHORS.ru.txt
