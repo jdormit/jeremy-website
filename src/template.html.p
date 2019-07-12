@@ -32,6 +32,6 @@
 	    </footer>
 	</div>
 	<script src="/js/highlight/highlight.pack.js"></script> 
-	<script>hljs.initHighlightingOnLoad();</script>
+	<script>hljs.configure({useBR: true}); hljs.initHighlightingOnLoad();</script>
     </body>
 </html> 
