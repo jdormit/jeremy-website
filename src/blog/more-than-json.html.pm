@@ -12,36 +12,36 @@ I’ve been doing a lot of research for my current side project, ◊link[#:href 
 One of the things I wasn’t satisfied with in the first version of Pterotype was the way it stores incoming data. ActivityPub messages are serialized in a dialect of JSON called ◊link[#:href "https://json-ld.org/"]{JSON-LD}. I didn’t really get JSON-LD when I started this project. It seems overcomplicated and confusing, and I was more interested in shipping something that worked than understanding the theoretical underpinnings of the federated web. So I just kept the incoming data in JSON format. This worked, sort of, but I kept running into annoying, hard-to-reason about situations. For example, consider this ActivityPub object, representing a new note that Sally published:
 
 ◊codeblock[#:lang "json"]{
- {
-   "@context": "https://www.w3.org/ns/activitystreams",
-   "id": "https://example.org/activities/1",
-   "type": "Create",
-   "actor": {
-     "type": "Person",
-     "id": "https://example.org/sally",
-     "name": "Sally"
-   },
-   "object": {
-     "id": "https://example.org/notes/1",
-     "type": "Note",
-     "content": "This is a simple note"
-   },
-   "published": "2015-01-25T12:34:56Z"
- }
- }
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/activities/1",
+  "type": "Create",
+  "actor": {
+    "type": "Person",
+    "id": "https://example.org/sally",
+    "name": "Sally"
+  },
+  "object": {
+    "id": "https://example.org/notes/1",
+    "type": "Note",
+    "content": "This is a simple note"
+  },
+  "published": "2015-01-25T12:34:56Z"
+}
+}
 
 The problem is that the above object, according to the ActivityPub specification, is semantically equivalent to this one:
 
 ◊codeblock[#:lang "json"]{
 {
-   "@context": "https://www.w3.org/ns/activitystreams",
-   "id": "https://example.org/activities/1",
-   "type": "Create",
-   "actor": "https://example.org/sally",
-   "object": "https://example.org/notes/1",
-   "published": "2015-01-25T12:34:56Z"
- }
- }
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/activities/1",
+  "type": "Create",
+  "actor": "https://example.org/sally",
+  "object": "https://example.org/notes/1",
+  "published": "2015-01-25T12:34:56Z"
+}
+}
 
 This is the object graph in action – the ◊code{actor} and ◊code{object} properties are pointers to other objects, and as such they can either be JSON objects embedded within the ◊code{Create} activity, or URIs that dereference to the actual object (dereferencing is a fancy word for following the URI and replacing it with whatever JSON object is on the other side). Since I was representing these ActivityPub objects in this JSON format, that meant that whenever I saw an ◊code{actor} or ◊code{object} property, I always had to check whether it was an object or a URI and if it was a URI I had to dereference it to the proper object. This led to tons of annoying boilerplate and conditionals:
 
@@ -61,30 +61,30 @@ So what’s the actual solution for this? Well, as it turns out these were exact
 
 ◊codeblock[#:lang "json"]{
 [
-   {
-     "https://www.w3.org/ns/activitystreams#actor": [
-       {
-         "@id": "https://example.org/sally"
-       }
-     ],
-     "@id": "https://example.org/activities/1",
-     "https://www.w3.org/ns/activitystreams#object": [
-       {
-         "@id": "https://example.org/notes/1"
-       }
-     ],
-     "https://www.w3.org/ns/activitystreams#published": [
-       {
-         "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
-         "@value": "2015-01-25T12:34:56Z"
-       }
-     ],
-     "@type": [
-       "https://www.w3.org/ns/activitystreams#Create"
-     ]
-   }
- ]
- }
+  {
+    "https://www.w3.org/ns/activitystreams#actor": [
+      {
+        "@id": "https://example.org/sally"
+      }
+    ],
+    "@id": "https://example.org/activities/1",
+    "https://www.w3.org/ns/activitystreams#object": [
+      {
+        "@id": "https://example.org/notes/1"
+      }
+    ],
+    "https://www.w3.org/ns/activitystreams#published": [
+      {
+        "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+        "@value": "2015-01-25T12:34:56Z"
+      }
+    ],
+    "@type": [
+      "https://www.w3.org/ns/activitystreams#Create"
+    ]
+  }
+]
+}
 
 So what’s up with those weird URL-looking attributes? And why has everything become an array?
 
