@@ -7,7 +7,7 @@
     <head>
 	<meta charset="utf-8">
 	<title>◊|the-title|</title>
-	<link rel="stylesheet" type="text/css" href="/normalize.css"
+	<link rel="stylesheet" type="text/css" href="/normalize.css" />
 	<link rel="stylesheet" type="text/css" href="/js/highlight/styles/default.css" />
 	<link rel="stylesheet" type="text/css" href="/fonts/century-supra/stylesheet.css" />
 	<link rel="stylesheet" type="text/css" href="/fonts/triplicate/stylesheet.css" />
