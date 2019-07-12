@@ -141,7 +141,7 @@ div.divider {
     border-top: 1px solid ◊|divider-color|;
 }
 
-@media screen and (max-width: 720px) {
+@media screen and (max-width: 768px) {
     .content {
 	grid-column: 2 / 12;
     }
