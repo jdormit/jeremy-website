@@ -8,7 +8,7 @@ Make sure you have Pollen installed, then run:
   raco pollen start
 #+END_SRC
 
-* Building the3 static site
+* Building the static site
 #+BEGIN_SRC sh
-  raco pollen publish src out
+  raco pollen render -s src && raco pollen publish src out
 #+END_SRC
