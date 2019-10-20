@@ -1,2 +1,14 @@
 * Jeremy Dormitzer's personal website
 This is my personal website. It's written using the [[https://docs.racket-lang.org/pollen/index.html][Pollen static site generator]].
+
+* Running the development server
+Make sure you have Pollen installed, then run:
+
+#+BEGIN_SRC sh
+  raco pollen start
+#+END_SRC
+
+* Building the3 static site
+#+BEGIN_SRC sh
+  raco pollen publish src out
+#+END_SRC
