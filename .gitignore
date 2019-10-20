@@ -3,3 +3,4 @@ src/**/*.css
 **/compiled/*
 src/**/*.js
 src/**/*.md
+out/
