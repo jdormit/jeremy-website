@@ -52,6 +52,7 @@
     <copyright>© Jeremy Dormitzer 2019</copyright>
     <ttl>60</ttl>
     <lastBuildDate>◊|today|</lastBuildDate>
+    <pubDate>◊|today|</pubDate>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     ◊(render-items (sort (children 'blog) date>? #:key post-published-date))
   </channel>
