@@ -1,7 +1,9 @@
 #lang pollen
-◊(require pollen/core
+◊(require gregor
+          pollen/core
           pollen/pagetree
           pollen/file
+	  pollen/template
 	  racket/path
 	  racket/string)
 
@@ -14,18 +16,32 @@
 
 ◊(current-pagetree ptree)
 
+◊(define (rfc822 dt) (~t dt "E, dd MMM yyyy HH:mm:ss Z"))
+
 ◊(define (render-item item)
-   (let ((src (get-source (path->string (path->complete-path (symbol->string item))))))
+   (let* ((src (get-source (path->string (path->complete-path (symbol->string item)))))
+          (link (format "https://jeremydormitzer.com/blog/~a" item)))
      (format
        "<item>
           <title>~a</title>
 	  <link>~a</link>
+	  <guid>~a</guid>
+	  <description>~a</description>
+	  <pubDate>~a</pubDate>
        </item>"
        (select 'h1 src)
-       (format "https://jeremydormitzer.com/blog/~a" item))))
+       link
+       link
+       (->html (get-doc src))
+       (rfc822 (with-timezone
+                 (at-midnight
+	           (parse-date (select-from-metas 'published src) "yyyy-MM-dd"))
+	         "America/New_York")))))
 
 ◊(define (render-items items)
    (string-join (map render-item items) "\n"))
+   
+◊(define today (rfc822 (now/moment)))
 
 <rss version="2.0">
   <channel>
@@ -35,6 +51,8 @@
     <language>en-us</language>
     <copyright>© Jeremy Dormitzer 2019</copyright>
     <ttl>60</ttl>
-    ◊(render-items (children 'blog))
+    <lastBuildDate>◊|today|</lastBuildDate>
+    <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+    ◊(render-items (sort (children 'blog) date>? #:key post-published-date))
   </channel>
 </rss>
