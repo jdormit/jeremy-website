@@ -108,14 +108,23 @@ ul.navigation {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 ul.navigation > li {
     display: inline;
     margin-left: 2em;
+    margin-top: 0;
     font-family: ◊|small-caps-font-stack|;
     font-size: 25px;
     letter-spacing: 0.05rem;
+}
+
+ul.navigation > li.rss {
+    margin-left: auto;
+    margin-right: 2em;
 }
 
 ul.navigation > li > a {
