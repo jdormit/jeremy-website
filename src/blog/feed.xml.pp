@@ -32,7 +32,7 @@
        (select 'h1 src)
        link
        link
-       (->html (get-doc src))
+       (->html (->html (get-doc src)))
        (rfc822 (with-timezone
                  (at-midnight
 	           (parse-date (select-from-metas 'published src) "yyyy-MM-dd"))
