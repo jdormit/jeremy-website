@@ -9,10 +9,7 @@
 
 ◊(define here-path (select-from-metas 'here-path metas))
 
-◊(define ptree (get-pagetree (build-path
-                               (path-only (string->path here-path))
-                               'up
-                               "index.ptree")))
+◊(define ptree (get-pagetree (simplify-path (build-path (path-only here-path) 'up "index.ptree"))))
 
 ◊(current-pagetree ptree)
 
