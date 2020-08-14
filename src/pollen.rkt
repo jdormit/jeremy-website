@@ -75,7 +75,7 @@
 (define (published-date date-str)
   (let ((publish-date (iso8601->date date-str)))
     (txexpr
-     'span '((class "published-date")) `("Posted on " ,(~t publish-date "MMMM d, y")))))
+     'p '((class "published-date")) `("Posted on " ,(~t publish-date "MMMM d, y")))))
 
 (define (make-excerpt doc)
   (let ((elts (get-elements doc)))
