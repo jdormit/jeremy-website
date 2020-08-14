@@ -9,7 +9,10 @@
 (provide (all-defined-out))
 
 (define (list-range lst start end)
-  (take (drop lst start) (- end start)))
+  (let ((dropped (drop lst start)))
+    (if (>= (length dropped) (- end start))
+        (take dropped (- end start))
+        dropped)))
 
 (define (post->source post)
   (get-source (path->string (path->complete-path (symbol->string post)))))
