@@ -97,3 +97,18 @@
   (make-keyword-procedure
    (lambda (kws kw-args . elements)
      (txexpr 'em (zip-kws kws kw-args) elements))))
+
+(define (process-list-item item)
+  (let ((item (string-trim
+               (string-trim item "-" #:right? #f))))
+    (when (and item (non-empty-string? item))
+      `(li ,item))))
+
+(define list
+  (make-keyword-procedure
+   (lambda (kws kw-args . elements)
+     (txexpr 'ul
+             (zip-kws kws kw-args)
+             (filter (lambda (x) (not (void? x)))
+                     (map process-list-item
+                          elements))))))
