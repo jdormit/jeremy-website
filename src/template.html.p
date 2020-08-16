@@ -35,7 +35,7 @@
 		◊(->html doc)
 	    </div>
 	    <footer>
-		© Jeremy Dormitzer 2019
+		<small>© Jeremy Dormitzer 2019 - 2020</small>
 	    </footer>
 	</div>
 	<script src="/js/highlight/highlight.pack.js"></script> 
