@@ -11,8 +11,8 @@
 	<link rel="alternate"  type="application/rss+xml" href="/blog/feed.xml"
 	<link rel="stylesheet" type="text/css" href="/normalize.css" />
 	<link rel="stylesheet" type="text/css" href="/js/highlight/styles/default.css" />
-	<link rel="stylesheet" type="text/css" href="/fonts/century-supra/stylesheet.css" />
-	<link rel="stylesheet" type="text/css" href="/fonts/triplicate/stylesheet.css" />
+        <link rel="stylesheet" type="text/css" href="/fonts/cooper-hewitt/stylesheet.css" />
+        <link rel="stylesheet" type="text/css" href="/fonts/charter/stylesheet.css" />
 	<link rel="stylesheet" type="text/css" href="/stylesheet.css" />
     </head>
     <body>
