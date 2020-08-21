@@ -8,7 +8,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>◊|the-title|</title>
-	<link rel="alternate"  type="application/rss+xml" href="/blog/feed.xml"
+	<link rel="alternate"  title="Jeremy Dormitzer's blog" type="application/rss+xml" href="/blog/feed.xml" /> 
 	<link rel="stylesheet" type="text/css" href="/normalize.css" />
 	<link rel="stylesheet" type="text/css" href="/js/highlight/styles/default.css" />
         <link rel="stylesheet" type="text/css" href="/fonts/cooper-hewitt/stylesheet.css" />
