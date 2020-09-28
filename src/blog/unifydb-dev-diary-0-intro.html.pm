@@ -1,6 +1,6 @@
 #lang pollen
 
-◊(define-meta title "UnifyDB Dev Diary 0: I’m building a database!")
+◊(define-meta title "unifyDB Dev Diary 0: I’m building a database!")
 ◊(define-meta published "2020-08-09")
 
 Phew, it’s been a while! Over a year, in fact. And what a wild year! Lots of good things happened: I got married, got a new job that I love, moved to a nice new apartment. Also some not-so-nice things, but since you are all living through 2020 just like me I don’t think I need to go into those. But I have still found some side-project time, and I’d like to start talking about what I’m building.
