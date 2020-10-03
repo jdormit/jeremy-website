@@ -1,7 +1,7 @@
 #lang pollen
 
 ◊(define-meta title "unifyDB Dev Diary 1: the query system")
-◊(define-meta published "2020-09-28")
+◊(define-meta published "2020-10-03")
 
 This is the first development diary for the database I'm writing, ◊link[#:href "https://github.com/unifydb/unifydb" #:target "_blank"]{unifyDB}. I wrote a brief introduction to the project ◊link[#:href "https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html" #:target "_blank"]{here}. In this post I'm going to talk about unifyDB's query system: what it does and how it works.
 
