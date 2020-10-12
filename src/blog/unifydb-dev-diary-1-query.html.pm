@@ -42,7 +42,7 @@ This corresponds with the following records in a more conventional JSON format:
         "id": 3,
         "username": "you-know-who",
         "role": ["user", "admin"],
-        "preferred-theme", "dark"
+        "preferred-theme": "dark"
     }
 ]
 }
