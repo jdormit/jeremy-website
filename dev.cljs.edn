@@ -1,5 +1,4 @@
-^{:auto-bundle :webpack
-  :open-url false}
+^{:open-url false}
 {:main jeremy-website.main
  :output-dir "src/cljs"
  :asset-path "cljs"}
