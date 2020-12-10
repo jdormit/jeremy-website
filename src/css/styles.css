@@ -34,10 +34,23 @@ header {
 nav {
     width: 100%;
     display: flex;
+    margin-top: 8px;
 }
 
 nav > * + * {
     margin-left: 24px;
+}
+
+.social-icons {
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-grow: 1;
+}
+
+.social-icons img {
+    margin-bottom: 0;
 }
 
 main {
