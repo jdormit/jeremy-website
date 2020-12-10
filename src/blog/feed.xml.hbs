@@ -1,0 +1,23 @@
+<rss version="2.0">
+    <channel>
+        <title>Jeremy Dormitzer's blog</title>
+        <link>https://jeremydormitzer.com/blog</link>
+        <description>Programming and general geekiness from Jeremy Dormitzer</description>
+        <language>en-us</language>
+        <copyright>© Jeremy Dormitzer 2020</copyright>
+        <ttl>60</ttl>
+        <lastBuildDate>{{ rfc822Date (now) }}</lastBuildDate>
+        <pubDate>{{ rfc822Date (now) }}</pubDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/obelix-site-builder/obelix</generator>
+        {{#each (reverse (sort pages key="published"))}}
+            <item>
+                <title>{{ title }}</title>
+                <link>https://jeremydormitzer.com{{ url }}</link>
+                <guid>https://jeremydormitzer.com{{ url }}</guid>
+                <pubDate>{{rfc822Date published}}</pubDate>
+                <description>{{ content }}</description>
+            </item>
+        {{/each}}
+    </channel>
+</rss>

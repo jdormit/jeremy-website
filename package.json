@@ -1,0 +1,20 @@
+{
+  "name": "jeremy-website",
+  "version": "1.0.0",
+  "description": "My personal website",
+  "dependencies": {
+    "moment": "^2.29.1",
+    "moment-timezone": "^0.5.32",
+    "obelix-plugin-excerpt": "^1.0.0",
+    "obelix-plugin-typography": "^1.0.2",
+    "typography-theme-moraga": "^0.16.19",
+    "voronoi": "^1.0.0",
+    "webpack": "^5.6.0",
+    "webpack-cli": "^4.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.jeremydormitzer.com:jdormit/jeremy-website"
+  },
+  "author": "Jeremy Dormitzer <jeremy.dormitzer@gmail.com>"
+}

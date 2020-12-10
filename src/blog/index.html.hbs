@@ -1,0 +1,10 @@
+---
+title: Jeremy Dormitzer’s blog
+---
+{{#each (reverse (sort pages key="published"))}}
+<h2>{{ title }}</h2>
+<p>Posted on {{formatDate published}}</p>
+<p>{{{ excerpt }}}</p>
+<p><a href="{{ url }}">Read more...</a></p>
+{{#unless @last}}<hr>{{/unless}}
+{{/each}}

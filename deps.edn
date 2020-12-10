@@ -1,0 +1,7 @@
+{:deps {org.clojure/clojurescript {:mvn/version "1.10.764"}
+        org.clojure/core.match {:mvn/version "1.0.0"}
+        com.bhauman/figwheel-main {:mvn/version "0.2.12"}
+        org.clojure/tools.cli {:mvn/version "1.0.194"}
+        quil {:mvn/version "3.1.0"}}
+ :paths ["cljs" "out"]
+ :aliases {:fig {:main-opts ["-m" "figwheel.main"]}}}

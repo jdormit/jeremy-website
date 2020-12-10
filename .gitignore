@@ -1,7 +1,8 @@
-src/**/*.html
-src/**/*.css
-**/compiled/*
-src/**/*.js
-src/**/*.md
-src/**/*.xml
-out/
+/node_modules/
+/out/
+/.log/
+/cljs/.cpcache/
+/src/cljs/
+/target/
+/.cpcache/
+/.nrepl-port

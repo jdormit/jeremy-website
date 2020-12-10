@@ -1,0 +1,9 @@
+{:src "src"
+ :out "out"
+ :handlebarsHelpers "helpers.js"
+ :plugins
+ {:obelix-plugin-typography
+  {:fileName "css/typography.css"
+   :theme "typography-theme-moraga"}
+  :obelix-plugin-excerpt
+  {:pruneLength 500}}}
