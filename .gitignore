@@ -6,4 +6,4 @@
 /.cpcache/
 /.nrepl-port
 /out/cljs/**/*
-!/out/cljs/**/main_bundle.js
+!/out/cljs/**/main.js
