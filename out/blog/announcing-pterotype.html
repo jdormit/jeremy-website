@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/typography.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>Announcing Pterotype</title>
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
+        <nav>
+          <span>Jeremy Dormitzer</span>
+          <a href="/">Home</a>
+          <a href="/blog">Blog</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container">
+      <h1>Announcing Pterotype</h1>
+      <img alt="a cute pterodactyl" src="/images/pterotype.png">
+      <p>In <a href="https://jeremydormitzer.com/blog/what-is-activitypub.html">my last post</a>, I wrote about an emerging web standard called ActivityPub that lets web services interoperate and form a federated, open social network. I made an argument about how important this new standard is – how it tears down walled gardens, discourages monopolies and centralization, and encourages user freedom.</p>
+      <p>I genuinely believe what I wrote, too. And so, to put my money where my mouth is, I’m excited to announce <a href="https://getpterotype.com/">Pterotype</a>! It’s a WordPress plugin that gives your blog an ActivityPub feed so that it can take advantage of all the benefits ActivityPub has to offer.</p>
+      <h2>Why WordPress?</h2>
+      <p>My mission is to open up the entire internet. I want every website, every social network, and every blog to be a part of the Fediverse. And WordPress <a href="https://w3techs.com/technologies/overview/content_management/all">runs literally 30% of the internet</a>. It’s not my favorite piece of software, and I certainly never expected to write any PHP, but the fact is that writing a WordPress plugin is the highest-impact way to grow the Fediverse the fastest.</p>
+      <h2>So wait, what does this actually do?</h2>
+      <p>Great question, glad you asked. Pterotype makes your blog look like a Mastodon/Pleroma/whatever account to users on those platforms. So, if you install Pterotype on your blog, Mastodon users will be able to search for <code>blog@yourawesomesite.com</code> in Mastodon and see your blog as if it was a Mastodon user. If they follow your blog within Mastodon (or Pleroma, or…), your new posts will show up in their home feed. This is what I meant in my last post about ActivityPub making sites first-class citizens in social networks – you don’t need a Mastodon account to make this work, and your content will show up in any service that implements ActivityPub without you needing an account on those platforms either.</p>
+      <p>Here’s what this blog looks like from Mastodon:</p>
+      <p>
+        <img src="/images/jeremy-mastodon.png" alt="my website on Mastodon">
+      </p>
+      <p>The plugin also syncs up comments between WordPress and the Fediverse. Replies from Mastodon et. al on your posts will show as WordPress comments, and comments from WordPress will show up as replies in the Fediverse. This is what I meant about tearing down walled gardens: people can comment on your blog posts using the platform of their choice, instead of being limited by the platform hosting the content.</p>
+      <h2>Sounds amazing! Can I use it now?</h2>
+      <p>Yes, with caveats. Pterotype is in early beta. The core features are in there – your blog will get a Fediverse profile, posts will federate, and comments will sync up – but it’s a pretty fiddly (and sometimes buggy) experience at the moment. If you do want to try it out, the plugin is in the <a href="https://wordpress.org/plugins/pterotype/">plugin repository</a>. If you install it on your blog, please consider <a href="https://getpterotype.com/beta">signing up for the beta program</a> as well – it’s how I’m collecting feedback and bug reports so I can make the plugin the best that it can be.</p>
+      <p>If you’d rather just follow my progress and dive in when it’s finished, that’s fine too! I made my development roadmap <a href="https://getpterotype.com/roadmap">publicly available</a>, and the plugin itself is open-source <a href="https://github.com/pterotype-project/pterotype">on GitHub</a>. I’m currently doing a major refactor, pulling out all of the ActivityPub-related logic <a href="https://github.com/pterotype-project/activitypub-php">into its own library</a> – once that’s done, it’ll be back to business as usual adding features and stability to Pterotype.</p>
+      <p>If you’ve read this far, and this project resonates with you, then you might be interested in <a href="https://www.patreon.com/pterotype">becoming a sponsor on Patreon</a>. Pterotype is free and open-source, so this is its only source of funding. For moment-to-moment updates, you can <a href="https://mastodon.technology/@jdormit">follow me on Mastodon</a>.</p>
+      <p>See you on the Fediverse!</p>
+    </main>
+    <footer>© Jeremy Dormitzer 2020</footer>
+    <link rel="preconnect" href="https://fonts.gstatic.com"><link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&#x26;display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/highlight/default.css">
+    <script src="/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>

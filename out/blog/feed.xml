@@ -1,0 +1,605 @@
+<rss version="2.0">
+    <channel>
+        <title>Jeremy Dormitzer's blog</title>
+        <link>https://jeremydormitzer.com/blog</link>
+        <description>Programming and general geekiness from Jeremy Dormitzer</description>
+        <language>en-us</language>
+        <copyright>© Jeremy Dormitzer 2020</copyright>
+        <ttl>60</ttl>
+        <lastBuildDate>Thu, 10 Dec 2020 10:46:18 EST</lastBuildDate>
+        <pubDate>Thu, 10 Dec 2020 10:46:18 EST</pubDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/obelix-site-builder/obelix</generator>
+            <item>
+                <title>unifyDB Dev Diary 1: the query system</title>
+                <link>https://jeremydormitzer.com/blog/unifydb-dev-diary-1-query.html</link>
+                <guid>https://jeremydormitzer.com/blog/unifydb-dev-diary-1-query.html</guid>
+                <pubDate>Fri, 2 Oct 2020 20:00:00 EDT</pubDate>
+                <description>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
+        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
+        &lt;title&gt;unifyDB Dev Diary 1: the query system&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;header&gt;
+            &lt;div class&#x3D;&quot;header-container&quot;&gt;
+                &lt;nav&gt;
+                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
+                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
+                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
+                &lt;/nav&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class&#x3D;&quot;container&quot;&gt;
+            &lt;h1&gt;unifyDB Dev Diary 1: the query system&lt;/h1&gt;
+            &lt;p&gt;This is the first development diary for the database I&#x27;m writing, &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb&quot;&gt;unifyDB&lt;/a&gt;. I wrote a brief introduction to the project &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html&quot;&gt;here&lt;/a&gt;. In this post I&#x27;m going to talk about unifyDB&#x27;s query system: what it does and how it works.&lt;/p&gt;
+&lt;p&gt;I want to start with an example of a unifyDB query, but to understand that we need to understand a bit about how unifyDB represents data. All data in unifyDB is stored as a collection of facts. A fact is a tuple with three pieces of information: an entity ID, an attribute name, and a value (actually, a fact has two additional fields, a transaction ID and an &lt;code&gt;added?&lt;/code&gt; flag, but we won&#x27;t worry about those until we talk about time-traveling queries, which deserves its own blog post). For example, we might represent some user records with the following set of facts:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(1, &quot;username&quot;, &quot;harry&quot;)
+(1, &quot;role&quot;, &quot;user&quot;)
+(1, &quot;preferred-theme&quot;, &quot;light&quot;)
+(2, &quot;username&quot;, &quot;dumbledore&quot;)
+(2, &quot;role&quot;, &quot;user&quot;)
+(2, &quot;role&quot;, &quot;admin&quot;)
+(2, &quot;preferred-theme&quot;, &quot;light&quot;)
+(3, &quot;username&quot;, &quot;you-know-who&quot;)
+(3, &quot;role&quot;, &quot;user&quot;)
+(3, &quot;role&quot;, &quot;user&quot;)
+(3, &quot;role&quot;, &quot;admin&quot;)
+(3, &quot;preferred-theme&quot;, &quot;dark&quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This corresponds with the following records in a more conventional JSON format:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-json&quot;&gt;[
+    {
+        &quot;id&quot;: 1,
+        &quot;username&quot;: &quot;harry&quot;,
+        &quot;role&quot;: [&quot;user&quot;],
+        &quot;preferred-theme&quot;: &quot;light&quot;
+    },
+    {
+        &quot;id&quot;: 2,
+        &quot;username&quot;: &quot;dumbledore&quot;,
+        &quot;role&quot;: [&quot;user&quot;, &quot;admin&quot;],
+        &quot;preferred-theme&quot;: &quot;light&quot;
+    },
+    {
+        &quot;id&quot;: 3,
+        &quot;username&quot;: &quot;you-know-who&quot;,
+        &quot;role&quot;: [&quot;user&quot;, &quot;admin&quot;],
+        &quot;preferred-theme&quot;: &quot;dark&quot;
+    }
+]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;(The astute reader will notice that there’s not actually a way to specify using a set of facts that &lt;code&gt;&quot;role&quot;&lt;/code&gt; is a list but &lt;code&gt;&quot;preferred-theme&quot;&lt;/code&gt; is a scalar value, i.e. the cardinality of an attribute. This requires another database feature, attribute schemas, that I’m going to save for another blog post.)&lt;/p&gt;
+&lt;p&gt;With that under our belt, let&#x27;s take a look at an example unifyDB query. The unifyDB server understands query written in &lt;a href&#x3D;&quot;https://github.com/edn-format/edn&quot;&gt;extensible data notation&lt;/a&gt;, but database clients for different programming languages will allow developers to write queries that feel native to that language. Here&#x27;s a query in EDN format:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;{:find [?username]
+ :where [[?e :preferred-theme &quot;light&quot;]
+         [?e :username ?username]]}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This query says, “find me the values of all the &lt;code&gt;username&lt;/code&gt; attributes of entities whose &lt;code&gt;preferred-theme&lt;/code&gt; is &lt;code&gt;&quot;light&quot;&lt;/code&gt;”. If we run this query on the set of facts given above, it would return:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;[[&quot;harry&quot;]
+ [&quot;dumbledore&quot;]]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Note that the return value is a list of lists —  although our query only asked for one field, &lt;code&gt;username&lt;/code&gt;, it could have asked for more, in which case each result in the result list would be a list with all the requested values. Once again, although unifyDB itself returns data in EDN format, client libraries will wrap that return value in whatever native data structure is convenient.&lt;/p&gt;
+&lt;p&gt;Let’s break that query down a bit. First, a bit of notation: any symbol that starts with a &lt;code&gt;?&lt;/code&gt; is called a variable, and is similar in spirit to a variable in a programming language. The query above has two major pieces: a &lt;code&gt;:find&lt;/code&gt; clause and a &lt;code&gt;:where&lt;/code&gt; clause. The &lt;code&gt;:find&lt;/code&gt; clause is straightforward: it asks to find the value of the variable &lt;code&gt;?username&lt;/code&gt;. But how does it know what value that variable has? That’s where things get interesting.&lt;/p&gt;
+&lt;p&gt;Let&#x27;s take a closer look at the &lt;code&gt;:where&lt;/code&gt; clause:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;:where [[?e :preferred-theme &quot;light&quot;]
+        [?e :username ?username]]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It is a list of two relations - that is, expressions which assert some relationship between variables. The first relation, &lt;code&gt;[?e :preferred-theme &quot;light&quot;]&lt;/code&gt;, declares that there is some entity &lt;code&gt;?e&lt;/code&gt; whose &lt;code&gt;:preferred-theme&lt;/code&gt; attribute has value &lt;code&gt;&quot;light&quot;&lt;/code&gt;. The second relation is slightly more abstract, declaring a relation between some entity &lt;code&gt;?e&lt;/code&gt; and the value of its &lt;code&gt;:username&lt;/code&gt; attribute, which it assigns to the variable &lt;code&gt;?username&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Notice that both relations share a variable, &lt;code&gt;?e&lt;/code&gt;. This is where the magic happens! When two relations share a variable, they are said to &lt;em&gt;unify&lt;/em&gt;. This means that the query engine finds all facts that satisfy &lt;em&gt;both&lt;/em&gt; relations for some entity &lt;code&gt;?e&lt;/code&gt;. In other words, unifyDB will find all sets of facts such that the facts share an entity &lt;code&gt;?e&lt;/code&gt;, have one fact with attribute &lt;code&gt;:preferred-theme&lt;/code&gt; and value &lt;code&gt;&quot;light&quot;&lt;/code&gt;, and have another fact with attribute &lt;code&gt;:username&lt;/code&gt; and any value.&lt;/p&gt;
+&lt;p&gt;The result of this unification process is a set of variable bindings, calculated from the facts that satisfy the query relation. In our example, we find that the following set of facts satisfies the query relation:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(1, &quot;username&quot;, &quot;harry&quot;)
+(1, &quot;preferred-theme&quot;, &quot;light&quot;)
+(2, &quot;username&quot;, &quot;dumbledore&quot;)
+(2, &quot;preferred-theme&quot;, &quot;light&quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Unifying these facts with the variables in the &lt;code&gt;:where&lt;/code&gt; clause yields the following set of bindings:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;{
+    ?e: 1,
+    ?username: &quot;harry&quot;
+},
+{
+    ?e: 2,
+    ?username: &quot;dumbledore&quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Finally, since our &lt;code&gt;:find&lt;/code&gt; clause asks only for the variable &lt;code&gt;?username&lt;/code&gt;, we look up that variable in the binding set, returning one result for each binding in the set:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;[[&quot;harry&quot;]
+ [&quot;dumbledore&quot;]]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This unification approach to querying makes the database particularly powerful. Although in this example we unified on the entity ID, we can also unify on the attribute name, value, or some combination of all three. This gives unifyDB the ability to function as a document store (looking up the “documents”, i.e. entities, which have attributes and values matching some pattern); or as a column-oriented database, looking for all the values of a certain attribute or even all the attributes that have a certain value. Of course, most apps will use a combination of all these different querying approaches, letting the database work for them in whatever way they need for a particular feature.&lt;/p&gt;
+&lt;p&gt;In fact, this is only half of the query engine, since it also supports adding &lt;em&gt;rules&lt;/em&gt; that let you compute new facts from existing facts in the database, but that is complex enough to warrant its own post.&lt;/p&gt;
+&lt;p&gt;There is a lot more I could write about here, but this is running kind of long so I’m going to leave it at this for now. You can follow the development of unifyDB &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb/&quot;&gt;on GitHub&lt;/a&gt; (the query engine is implemented &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb/blob/master/src/unifydb/query.clj&quot;&gt;here&lt;/a&gt; and unification is implemented &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb/blob/master/src/unifydb/unify.clj&quot;&gt;here&lt;/a&gt;). If you are interested in this topic and want to dive into the implementation, I based my work on the excellent logical database engine in &lt;a href&#x3D;&quot;https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-29.html#%25_sec_4.4&quot;&gt;chapter 4.4 of Structure and Interpretation of Computer Programs&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;As always, if you want to know more about unifyDB, have questions about this post or just want to geek out, hit me up &lt;a href&#x3D;&quot;https://twitter.com/jeremydormitzer&quot;&gt;on Twitter&lt;/a&gt;.&lt;/p&gt;
+        &lt;/main&gt;
+        &lt;footer&gt;
+            © Jeremy Dormitzer 2020
+        &lt;/footer&gt;
+        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
+        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
+        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</description>
+            </item>
+            <item>
+                <title>unifyDB Dev Diary 0: I’m building a database!</title>
+                <link>https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html</link>
+                <guid>https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html</guid>
+                <pubDate>Sat, 8 Aug 2020 20:00:00 EDT</pubDate>
+                <description>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
+        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
+        &lt;title&gt;unifyDB Dev Diary 0: I’m building a database!&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;header&gt;
+            &lt;div class&#x3D;&quot;header-container&quot;&gt;
+                &lt;nav&gt;
+                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
+                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
+                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
+                &lt;/nav&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class&#x3D;&quot;container&quot;&gt;
+            &lt;h1&gt;unifyDB Dev Diary 0: I’m building a database!&lt;/h1&gt;
+            &lt;p&gt;Phew, it’s been a while! Over a year, in fact. And what a wild year! Lots of good things happened: I got married, got a new job that I love, moved to a nice new apartment. Also some not-so-nice things, but since you are all living through 2020 just like me I don’t think I need to go into those. But I have still found some side-project time, and I’d like to start talking about what I’m building.&lt;/p&gt;
+&lt;p&gt;So – I’m excited to announce that I’m building a database! I’m calling it unifyDB. It’s going to be a general-purpose database with some pretty interesting properties:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;It maintains a complete history of changes to all entities stored in the database&lt;/li&gt;
+&lt;li&gt;You can make queries for historical data, e.g. “what did this user record look like last Tuesday?”&lt;/li&gt;
+&lt;li&gt;Arbitrary metadata can be attached to transactions – for example, you can add an application user ID to every transaction your app makes&lt;/li&gt;
+&lt;li&gt;Fine-grained access control is built into the database, allowing developers to limit access to particular attributes across all entities&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This is the database that I’ve always wanted – basically, I’m tired of being in meetings where the boss says “who changed this user’s email address?” and everyone just looks at each other and shrugs.&lt;/p&gt;
+&lt;p&gt;I’m designing unifyDB to be as modular as possible – I want it to be as easy to run it as a single node on your local machine as it is to run in an autoscaling cluster on your cloud of choice.&lt;/p&gt;
+&lt;p&gt;I’ve actually been working on this on and off for over a year. The code lives in &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb&quot;&gt;a GitHub repository&lt;/a&gt;. Fair warning: it’s mostly undocumented and nowhere close to being finished. So far, I’ve written the query engine, the transaction handler, the web server (yes, it has an HTTP interface), and a bunch of underlying infrastructure. So as it currently stands, unifyDB is able to store data (in-memory since I haven’t built the storage layer yet) and issue history-aware queries. I’m in the middle of writing the authentication mechanism. After that, it’s on to the storage layer, then most likely the access control layer.&lt;/p&gt;
+&lt;p&gt;I’m going to start publishing monthly development diaries detailing the more interesting aspects of database. I’ll start with a post about the query system implementation sometime in the next couple of weeks. Sound interesting? Follow along &lt;a href&#x3D;&quot;https://feedly.com/i/subscription/feed%2Fhttps%3A%2F%2Fjeremydormitzer.com%2Fblog%2Ffeed.xml&quot;&gt;on Feedly&lt;/a&gt; or &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/feed.xml&quot;&gt;your RSS reader of choice&lt;/a&gt;!.&lt;/p&gt;
+&lt;p&gt;In the meantime, if you want to know more about unifyDB or just want to geek out, hit me up &lt;a href&#x3D;&quot;https://twitter.com/jeremydormitzer&quot;&gt;on Twitter&lt;/a&gt;.&lt;/p&gt;
+        &lt;/main&gt;
+        &lt;footer&gt;
+            © Jeremy Dormitzer 2020
+        &lt;/footer&gt;
+        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
+        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
+        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</description>
+            </item>
+            <item>
+                <title>More than JSON: ActivityPub and JSON-LD</title>
+                <link>https://jeremydormitzer.com/blog/more-than-json.html</link>
+                <guid>https://jeremydormitzer.com/blog/more-than-json.html</guid>
+                <pubDate>Mon, 22 Apr 2019 20:00:00 EDT</pubDate>
+                <description>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
+        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
+        &lt;title&gt;More than JSON: ActivityPub and JSON-LD&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;header&gt;
+            &lt;div class&#x3D;&quot;header-container&quot;&gt;
+                &lt;nav&gt;
+                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
+                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
+                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
+                &lt;/nav&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class&#x3D;&quot;container&quot;&gt;
+            &lt;h1&gt;More than JSON: ActivityPub and JSON-LD&lt;/h1&gt;
+            &lt;blockquote&gt;
+&lt;p&gt;&lt;em&gt;In which our hero discovers the power of normalization and JSON-LD&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2&gt;The problem with JSON&lt;/h2&gt;
+&lt;p&gt;I’ve been doing a lot of research for my current side project, &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/announcing-pterotype/&quot;&gt;Pterotype&lt;/a&gt;. It’s a new kind of social network built as a WordPress plugin that respects your freedom, encourages choice, and interoperates with existing social networks through the power of &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/what-is-activitypub-and-how-will-it-change-the-internet/&quot;&gt;ActivityPub&lt;/a&gt;. It’s undergone several iterations already – the beta has been out for a while now, and I’ve been working hard on a version 2 for the last several months.&lt;/p&gt;
+&lt;p&gt;One of the things I wasn’t satisfied with in the first version of Pterotype was the way it stores incoming data. ActivityPub messages are serialized in a dialect of JSON called &lt;a href&#x3D;&quot;https://json-ld.org/&quot;&gt;JSON-LD&lt;/a&gt;. I didn’t really get JSON-LD when I started this project. It seems overcomplicated and confusing, and I was more interested in shipping something that worked than understanding the theoretical underpinnings of the federated web. So I just kept the incoming data in JSON format. This worked, sort of, but I kept running into annoying, hard-to-reason about situations. For example, consider this ActivityPub object, representing a new note that Sally published:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-json&quot;&gt;{
+  &quot;@context&quot;: &quot;https://www.w3.org/ns/activitystreams&quot;,
+  &quot;id&quot;: &quot;https://example.org/activities/1&quot;,
+  &quot;type&quot;: &quot;Create&quot;,
+  &quot;actor&quot;: {
+    &quot;type&quot;: &quot;Person&quot;,
+    &quot;id&quot;: &quot;https://example.org/sally&quot;,
+    &quot;name&quot;: &quot;Sally&quot;
+  },
+  &quot;object&quot;: {
+    &quot;id&quot;: &quot;https://example.org/notes/1&quot;,
+    &quot;type&quot;: &quot;Note&quot;,
+    &quot;content&quot;: &quot;This is a simple note&quot;
+  },
+  &quot;published&quot;: &quot;2015-01-25T12:34:56Z&quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The problem is that the above object, according to the ActivityPub specification, is semantically equivalent to this one:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-json&quot;&gt;{
+  &quot;@context&quot;: &quot;https://www.w3.org/ns/activitystreams&quot;,
+  &quot;id&quot;: &quot;https://example.org/activities/1&quot;,
+  &quot;type&quot;: &quot;Create&quot;,
+  &quot;actor&quot;: &quot;https://example.org/sally&quot;,
+  &quot;object&quot;: &quot;https://example.org/notes/1&quot;,
+  &quot;published&quot;: &quot;2015-01-25T12:34:56Z&quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This is the object graph in action – the &lt;code&gt;actor&lt;/code&gt; and &lt;code&gt;object&lt;/code&gt; properties are pointers to other objects, and as such they can either be JSON objects embedded within the &lt;code&gt;Create&lt;/code&gt; activity, or URIs that dereference to the actual object (dereferencing is a fancy word for following the URI and replacing it with whatever JSON object is on the other side). Since I was representing these ActivityPub objects in this JSON format, that meant that whenever I saw an &lt;code&gt;actor&lt;/code&gt; or &lt;code&gt;object&lt;/code&gt; property, I always had to check whether it was an object or a URI and if it was a URI I had to dereference it to the proper object. This led to tons of annoying boilerplate and conditionals:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-php&quot;&gt;if ( is_string( $activity[&#x27;object&#x27;] ) ) {
+    $activity[&#x27;object&#x27;] &#x3D; dereference_object( $activity[&#x27;object&#x27;] );
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Yikes. So I came up with what I thought was a clever solution: just walk the object graph and dereference every URI I found whenever I saw a new JSON object. So I would receive Sally’s &lt;code&gt;Create&lt;/code&gt; activity and traverse the JSON representation of its graph, dereferencing the &lt;code&gt;actor&lt;/code&gt; and &lt;code&gt;object&lt;/code&gt; objects in the process. This effectively turned the second representation above into the first one. Problem solved, right?&lt;/p&gt;
+&lt;p&gt;Well, not quite. There are actually a bunch of problems with that approach. First, not all URIs in the JSON object should be dereferenced. For example, there is an ActivityPub attribute called &lt;code&gt;url&lt;/code&gt; that is – you guessed it – a URL! And it is supposed to stay a URL, not get dereferenced to some other thing. Okay, so I’ll only dereference URIs that belong to attributes I know should contain references to other objects – &lt;code&gt;actor&lt;/code&gt;, &lt;code&gt;object&lt;/code&gt;, etc. But there’s still a problem! There’s no guarantee that we’ll be able to successfully dereference a URI. Maybe the server that was hosting that object went down. Maybe there’s a temporary network failure. Maybe it’s the year 3000 and bitrot has taken down 80% of the internet. The point is, even if we preemptively dereference all the URIs we can, we still need to handle the case where we couldn’t access the actual object and are stuck with the URI. Which means we still need those stupid conditionals everywhere!&lt;/p&gt;
+&lt;h2&gt;JSON-LD to the rescue&lt;/h2&gt;
+&lt;p&gt;So what’s the actual solution for this? Well, as it turns out these were exactly the types of issues that JSON-LD is designed to solve. JSON-LD provides a way to normalize data into a standard form based on a /context/ that defines a schema for the data. Here’s the second version of Sally’s activity from above after undergoing JSON-LD expansion:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-json&quot;&gt;[
+  {
+    &quot;https://www.w3.org/ns/activitystreams#actor&quot;: [
+      {
+        &quot;@id&quot;: &quot;https://example.org/sally&quot;
+      }
+    ],
+    &quot;@id&quot;: &quot;https://example.org/activities/1&quot;,
+    &quot;https://www.w3.org/ns/activitystreams#object&quot;: [
+      {
+        &quot;@id&quot;: &quot;https://example.org/notes/1&quot;
+      }
+    ],
+    &quot;https://www.w3.org/ns/activitystreams#published&quot;: [
+      {
+        &quot;@type&quot;: &quot;http://www.w3.org/2001/XMLSchema#dateTime&quot;,
+        &quot;@value&quot;: &quot;2015-01-25T12:34:56Z&quot;
+      }
+    ],
+    &quot;@type&quot;: [
+      &quot;https://www.w3.org/ns/activitystreams#Create&quot;
+    ]
+  }
+]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So what’s up with those weird URL-looking attributes? And why has everything become an array?&lt;/p&gt;
+&lt;p&gt;The expansion algorithm has normalized the data into a form that is supposed to be universally normalized. The attributes – &lt;code&gt;object&lt;/code&gt;, &lt;code&gt;actor&lt;/code&gt;, etc. – have become URIs with a universal meaning and a known schema. In other words, any application that speaks JSON-LD knows what an &lt;code&gt;https://www.w3.org/ns/activitystreams#actor&lt;/code&gt; is, even if they don’t know what an actor is.&lt;/p&gt;
+&lt;p&gt;Importantly for our purposes, take a look at what the &lt;code&gt;object&lt;/code&gt; field has turned into. We went from:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-json&quot;&gt;&quot;object&quot;: &quot;https://example.org/notes/1&quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;To:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-json&quot;&gt;&quot;https://www.w3.org/ns/activitystreams#object&quot;: [
+  {
+    &quot;@id&quot;: &quot;https://example.org/notes/1&quot;
+  }
+]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Because the object attribute is specified in the &lt;a href&#x3D;&quot;https://www.w3.org/ns/activitystreams.jsonld&quot;&gt;ActivityStreams JSON-LD vocabulary&lt;/a&gt; to be of &lt;code&gt;@type&lt;/code&gt;: &lt;code&gt;@id&lt;/code&gt;, the expansion process was able to infer that &lt;code&gt;object&lt;/code&gt; ought to be, well, an object. This neatly solves the problem of “is this string attribute actually a reference” – all references are clearly marked by their &lt;code&gt;@id&lt;/code&gt; attributes now. Plus, this allows us to be smarter about when we dereference an object – for example, we can defer dereferencing until we actually need to access the attributes of the linked object. This approach also addresses the problem of network errors when dereferencing – if we can’t dereference, we just end up with an object that has only an &lt;code&gt;@id&lt;/code&gt;, which can still be handled gracefully by the application.&lt;/p&gt;
+&lt;p&gt;Hopefully this gave some insight into the types of challenges involved with building ActivityPub-powered applications and the point of JSON-LD. Have questions? Did I do something wrong? Let me know in the comments or on the &lt;a href&#x3D;&quot;https://mastodon.technology/@jdormit&quot;&gt;Fediverse&lt;/a&gt;!&lt;/p&gt;
+        &lt;/main&gt;
+        &lt;footer&gt;
+            © Jeremy Dormitzer 2020
+        &lt;/footer&gt;
+        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
+        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
+        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</description>
+            </item>
+            <item>
+                <title>ActivityPub: Good enough for jazz</title>
+                <link>https://jeremydormitzer.com/blog/activitypub-good-enough-for-jazz.html</link>
+                <guid>https://jeremydormitzer.com/blog/activitypub-good-enough-for-jazz.html</guid>
+                <pubDate>Sun, 6 Jan 2019 19:00:00 EST</pubDate>
+                <description>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
+        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
+        &lt;title&gt;ActivityPub: Good enough for jazz&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;header&gt;
+            &lt;div class&#x3D;&quot;header-container&quot;&gt;
+                &lt;nav&gt;
+                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
+                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
+                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
+                &lt;/nav&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class&#x3D;&quot;container&quot;&gt;
+            &lt;h1&gt;ActivityPub: Good enough for jazz&lt;/h1&gt;
+            &lt;img alt&#x3D;&quot;activitypub&quot; src&#x3D;&quot;/images/activitypub.png&quot; /&gt;
+&lt;p&gt;&lt;a href&#x3D;&quot;https://pleroma.site/users/kaniini&quot;&gt;Kaniini&lt;/a&gt;, one of the lead developers of Pleroma, recently published a blog post called &lt;a href&#x3D;&quot;https://blog.dereferenced.org/activitypub-the-worse-is-better-approach-to-federated-social-networking&quot;&gt;ActivityPub: The “Worse is Better” Approach to Federated Social Networking&lt;/a&gt;. It’s a critique of the security and safety of the &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/what-is-activitypub-and-how-will-it-change-the-internet/&quot;&gt;ActivityPub protocol&lt;/a&gt;. They make some good points:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ActivityPub doesn’t support fine-grained access control checks, e.g. I want someone to be able to see my posts but not respond to them&lt;/li&gt;
+&lt;li&gt;Instances you’ve banned can still see threads from your instance in some ActivityPub implementations, because someone from a third instance replies to the thread and that reply reaches the banned instance&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The post also generated an &lt;a href&#x3D;&quot;https://playvicious.social/@Are0h/101372851868909058&quot;&gt;interesting Fediverse thread&lt;/a&gt; discussing the tradeoffs between proliferating the existing protocol versus making changes to it, and whether it would be possible to improve the protocol without breaking backward compatibility. It’s worth a read.&lt;/p&gt;
+&lt;p&gt;Here’s the thing: ActivityPub is a protocol, and protocols are only valuable as long as there is software out there actually using the protocol. At the end of the day, that’s the most important measure of success. Don’t get me wrong – protocols need to do the job they set out to do well. But at some point, the protocol works well enough that it becomes more important to foster adoption than to continue improving. I believe that ActivityPub has reached that point.&lt;/p&gt;
+&lt;p&gt;Now, I’m not suggesting that we stop development on the protocol. But future improvements to it should be iterative, building on the existing specification, and backward compatible whenever possible. For example, by all means let’s come up with a better access control model for ActivityPub – but we should also come up with a compatibility layer that assumes some default set of access capabilities for implementations that haven’t upgraded. This lets us move forward without leaving the protocol’s participants behind, preserving ActivityPub’s value.&lt;/p&gt;
+&lt;p&gt;We are in good company here. This model is exactly how HTTP became the protocol that powers the internet. If you have the time, check out this &lt;a href&#x3D;&quot;https://hpbn.co/brief-history-of-http/&quot;&gt;excellent (brief) history&lt;/a&gt; of the HTTP protocol. Here are the highlights: Tim Berners-Lee came up with HTTP 0.9, which was an extremely simple protocol that allowed clients to request a resource and receive a response. HTTP 1.0 added headers and a variety of other features. HTTP 1.1 added performance optimizations and fixed ambiguities in the 1.0 specification.&lt;/p&gt;
+&lt;p&gt;Critically, all of these versions of HTTP were similar enough that a server that supported HTTP 1.1 could trivially also support HTTP 1.0 and 0.9 (because 0.9 is actually a subset of 1.1). In fact, the Apache and Nginx web servers, which power most websites on the internet, still support HTTP 0.9! By designing and iterating on HTTP in a way that preserved backward compatibility, the early web pioneers were able to build a robust, performant, secure protocol while still encouraging global adoption.&lt;/p&gt;
+&lt;p&gt;If we want the Fediverse to be just as robust, performant, secure, and globally adopted, we should take the same approach.&lt;/p&gt;
+        &lt;/main&gt;
+        &lt;footer&gt;
+            © Jeremy Dormitzer 2020
+        &lt;/footer&gt;
+        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
+        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
+        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</description>
+            </item>
+            <item>
+                <title>Announcing Pterotype</title>
+                <link>https://jeremydormitzer.com/blog/announcing-pterotype.html</link>
+                <guid>https://jeremydormitzer.com/blog/announcing-pterotype.html</guid>
+                <pubDate>Wed, 14 Nov 2018 19:00:00 EST</pubDate>
+                <description>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
+        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
+        &lt;title&gt;Announcing Pterotype&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;header&gt;
+            &lt;div class&#x3D;&quot;header-container&quot;&gt;
+                &lt;nav&gt;
+                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
+                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
+                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
+                &lt;/nav&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class&#x3D;&quot;container&quot;&gt;
+            &lt;h1&gt;Announcing Pterotype&lt;/h1&gt;
+            &lt;img alt&#x3D;&quot;a cute pterodactyl&quot; src&#x3D;&quot;/images/pterotype.png&quot; /&gt;
+&lt;p&gt;In &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/what-is-activitypub.html&quot;&gt;my last post&lt;/a&gt;, I wrote about an emerging web standard called ActivityPub that lets web services interoperate and form a federated, open social network. I made an argument about how important this new standard is – how it tears down walled gardens, discourages monopolies and centralization, and encourages user freedom.&lt;/p&gt;
+&lt;p&gt;I genuinely believe what I wrote, too. And so, to put my money where my mouth is, I’m excited to announce &lt;a href&#x3D;&quot;https://getpterotype.com/&quot;&gt;Pterotype&lt;/a&gt;! It’s a WordPress plugin that gives your blog an ActivityPub feed so that it can take advantage of all the benefits ActivityPub has to offer. &lt;/p&gt;
+&lt;h2&gt;Why WordPress?&lt;/h2&gt;
+&lt;p&gt;My mission is to open up the entire internet. I want every website, every social network, and every blog to be a part of the Fediverse. And WordPress &lt;a href&#x3D;&quot;https://w3techs.com/technologies/overview/content_management/all&quot;&gt;runs literally 30% of the internet&lt;/a&gt;. It’s not my favorite piece of software, and I certainly never expected to write any PHP, but the fact is that writing a WordPress plugin is the highest-impact way to grow the Fediverse the fastest.&lt;/p&gt;
+&lt;h2&gt;So wait, what does this actually do?&lt;/h2&gt;
+&lt;p&gt;Great question, glad you asked. Pterotype makes your blog look like a Mastodon/Pleroma/whatever account to users on those platforms. So, if you install Pterotype on your blog, Mastodon users will be able to search for &lt;code&gt;blog@yourawesomesite.com&lt;/code&gt; in Mastodon and see your blog as if it was a Mastodon user. If they follow your blog within Mastodon (or Pleroma, or…), your new posts will show up in their home feed. This is what I meant in my last post about ActivityPub making sites first-class citizens in social networks – you don’t need a Mastodon account to make this work, and your content will show up in any service that implements ActivityPub without you needing an account on those platforms either.&lt;/p&gt;
+&lt;p&gt;Here’s what this blog looks like from Mastodon:&lt;/p&gt;
+&lt;p&gt;&lt;img src&#x3D;&quot;/images/jeremy-mastodon.png&quot; alt&#x3D;&quot;my website on Mastodon&quot;&gt;&lt;/p&gt;
+&lt;p&gt;The plugin also syncs up comments between WordPress and the Fediverse. Replies from Mastodon et. al on your posts will show as WordPress comments, and comments from WordPress will show up as replies in the Fediverse. This is what I meant about tearing down walled gardens: people can comment on your blog posts using the platform of their choice, instead of being limited by the platform hosting the content.&lt;/p&gt;
+&lt;h2&gt;Sounds amazing! Can I use it now?&lt;/h2&gt;
+&lt;p&gt;Yes, with caveats. Pterotype is in early beta. The core features are in there – your blog will get a Fediverse profile, posts will federate, and comments will sync up – but it’s a pretty fiddly (and sometimes buggy) experience at the moment. If you do want to try it out, the plugin is in the &lt;a href&#x3D;&quot;https://wordpress.org/plugins/pterotype/&quot;&gt;plugin repository&lt;/a&gt;. If you install it on your blog, please consider &lt;a href&#x3D;&quot;https://getpterotype.com/beta&quot;&gt;signing up for the beta program&lt;/a&gt; as well – it’s how I’m collecting feedback and bug reports so I can make the plugin the best that it can be.&lt;/p&gt;
+&lt;p&gt;If you’d rather just follow my progress and dive in when it’s finished, that’s fine too! I made my development roadmap &lt;a href&#x3D;&quot;https://getpterotype.com/roadmap&quot;&gt;publicly available&lt;/a&gt;, and the plugin itself is open-source &lt;a href&#x3D;&quot;https://github.com/pterotype-project/pterotype&quot;&gt;on GitHub&lt;/a&gt;. I’m currently doing a major refactor, pulling out all of the ActivityPub-related logic &lt;a href&#x3D;&quot;https://github.com/pterotype-project/activitypub-php&quot;&gt;into its own library&lt;/a&gt; – once that’s done, it’ll be back to business as usual adding features and stability to Pterotype.&lt;/p&gt;
+&lt;p&gt;If you’ve read this far, and this project resonates with you, then you might be interested in &lt;a href&#x3D;&quot;https://www.patreon.com/pterotype&quot;&gt;becoming a sponsor on Patreon&lt;/a&gt;. Pterotype is free and open-source, so this is its only source of funding. For moment-to-moment updates, you can &lt;a href&#x3D;&quot;https://mastodon.technology/@jdormit&quot;&gt;follow me on Mastodon&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;See you on the Fediverse!&lt;/p&gt;
+        &lt;/main&gt;
+        &lt;footer&gt;
+            © Jeremy Dormitzer 2020
+        &lt;/footer&gt;
+        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
+        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
+        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</description>
+            </item>
+            <item>
+                <title>What is ActivityPub, and how will it change the internet?</title>
+                <link>https://jeremydormitzer.com/blog/what-is-activitypub.html</link>
+                <guid>https://jeremydormitzer.com/blog/what-is-activitypub.html</guid>
+                <pubDate>Fri, 14 Sep 2018 20:00:00 EDT</pubDate>
+                <description>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
+        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
+        &lt;title&gt;What is ActivityPub, and how will it change the internet?&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;header&gt;
+            &lt;div class&#x3D;&quot;header-container&quot;&gt;
+                &lt;nav&gt;
+                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
+                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
+                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
+                &lt;/nav&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class&#x3D;&quot;container&quot;&gt;
+            &lt;h1&gt;What is ActivityPub, and how will it change the internet?&lt;/h1&gt;
+            &lt;img alt&#x3D;&quot;a network-shaped board game&quot; src&#x3D;&quot;/images/board-game.jpg&quot; /&gt;
+&lt;h2&gt;A new kind of social network&lt;/h2&gt;
+&lt;p&gt;There’s a new social network in town. It’s called &lt;a href&#x3D;&quot;https://joinmastodon.org/&quot;&gt;Mastodon&lt;/a&gt;. You might have even heard of it. On the surface, Mastodon feels a lot like Twitter: you post “toots” up to 500 characters; you follow other users who say interesting things; you can favorite a toot or re-post it to your own followers. But Mastodon is different from Twitter in some fundamental ways. It offers many more ways for users to control the posts they see. It fosters awareness of the effect your posts have on others through a content warning system and encourages accessibility with captioned images. At its core, though, there’s a more fundamental difference from existing social networks: Mastodon isn’t controlled by a single corporation. Anyone can operate a Mastodon server, and users on any server can interact with users on any other Mastodon server.&lt;/p&gt;
+&lt;p&gt;This decentralized model is called federation. Email is a good analogy here: I can have a Gmail account and you can have an Outlook account, but we can still send mail to each other. In the same way, I can have an account on &lt;a href&#x3D;&quot;https://mastodon.technology/invite/JguyVqcL&quot;&gt;mastodon.technology&lt;/a&gt;, and you can have an account on &lt;a href&#x3D;&quot;https://mastodon.social/&quot;&gt;mastodon.social&lt;/a&gt;, but we can still follow each other, like and re-post each other’s toots, and @mention each other. Just like Gmail servers know how to talk to Outlook servers, Mastodon servers know how to talk to other Mastodon servers (if you hear people talking about a Mastodon “instance”, they mean server). And just like Gmail and Outlook are controlled by different corporations, Mastodon servers are owned and operated by many different people and organizations. If you wanted, you could &lt;a href&#x3D;&quot;https://github.com/tootsuite/documentation#running-mastodon&quot;&gt;host your own Mastodon instance&lt;/a&gt;!&lt;/p&gt;
+&lt;p&gt;Why does this matter? It means that Mastodon users have choice about where they hang out online. If Twitter decides that your posts shouldn’t be on their platform, they can shut down your account and there’s nothing you can do about it (or conversely, if they decide your f-ed up content is totally fine, there’s nothing anyone else can do about it). On the other hand, if you disagree with the administrators of your Mastodon instance, you have the choice to move your account to another instance (switching providers, as it were) or to host your own instance if you’re willing to dedicate the time and effort.&lt;/p&gt;
+&lt;p&gt;The federated model also tends to align incentives better than centralized alternatives. Mastodon instances are usually run and moderated by members of the community that uses that particular Mastodon server – for example, I’m part of a community of tech folks over at &lt;a href&#x3D;&quot;https://mastodon.technology/invite/JguyVqcL&quot;&gt;mastodon.technology&lt;/a&gt;, and our server is administrated and moderated by a member of the community. He has a vested interest in making mastodon.technology a nice place to hang out since he hangs out there too. Contrast that with Twitter: Twitter is owned and operated by a massive, venture-backed, for-profit corporation. Now, I’m certainly not against companies making money (more on that later), but Twitter only cares about making Twitter a nice place to hang out to the extent that they profit by it, which has led them to make &lt;a href&#x3D;&quot;http://www.slate.com/articles/technology/cover_story/2017/03/twitter_s_timeline_algorithm_and_its_effect_on_us_explained.html&quot;&gt;some user-unfriendly choices&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;So Mastodon is pretty cool. But that’s not what really gets me excited. I’m excited about how Mastodon servers allow users on different instances to interact. It’s a protocol called &lt;a href&#x3D;&quot;https://activitypub.rocks/&quot;&gt;ActivityPub&lt;/a&gt;, and it’s going to change the way the internet works. &lt;/p&gt;
+&lt;h2&gt;ActivityPub&lt;/h2&gt;
+&lt;p&gt;ActivityPub is a social networking protocol. Think of it as a language that describes social networks: the nouns are users and posts, and the verbs are like, follow, share, create… ActivityPub gives applications a shared vocabulary that they can use to communicate with each other. If a server implements ActivityPub, it can publish posts that any other server that implements ActivityPub knows how to share, like and reply to. It can also share, like, or reply to posts from other servers that speak ActivityPub on behalf of its users.&lt;/p&gt;
+&lt;p&gt;This is how Mastodon instances let users interact with users on other instances: because every Mastodon instance implements ActivityPub, one instance knows how to interpret a post published from another instance, how to like a post from another instance, how to follow a user from another instance, etc.&lt;/p&gt;
+&lt;p&gt;ActivityPub is much bigger than just Mastodon, though. It’s a language that any application can implement. For example, there’s a YouTube clone called &lt;a href&#x3D;&quot;https://joinpeertube.org/en/faq/&quot;&gt;PeerTube&lt;/a&gt; that also implements ActivityPub. Because it speaks the same language as Mastodon, a Mastodon user can follow a PeerTube user. If the PeerTube user posts a new video, it will show up in the Mastodon user’s feed. The Mastodon user can comment on the PeerTube video directly from Mastodon. Think about that for a second. Any app that implements ActivityPub becomes part of a massive social network, one that conserves user choice and tears down walled gardens. Imagine if you could log into Facebook and see posts from your friends on Instagram and Twitter, without needing an Instagram or Twitter account.&lt;/p&gt;
+&lt;p&gt;So here’s how ActivityPub is going to change the internet: &lt;/p&gt;
+&lt;h2&gt;No more walled gardens&lt;/h2&gt;
+&lt;p&gt;ActivityPub separates content from platform. Posts from one platform propagate to other platforms, and users don’t need to make separate accounts on every platform that they want to use. This has an additional benefit: since your ActivityPub identity (your Mastodon account, your PeerTube account, etc.) is valid across all ActivityPub-compliant applications, it serves as a much stronger identity signal, preventing malicious actors from impersonating you (e.g. creating a Twitter account in your name). If you can share one account across multiple platforms, no one can pretend to be you on those platforms – you are already there!&lt;/p&gt;
+&lt;h2&gt;Social networking comes built-in&lt;/h2&gt;
+&lt;p&gt;With traditional internet media, you need to rely on external services to share your work on social networks. If you want people to share your YouTube video around, you need to post it to Facebook or Twitter. But ActvityPub-enabled applications are social by nature. A PeerTube video can be shared or liked by default by users on Mastodon. A Plume blogger can build an audience on Mastodon or PeerTube without any additional effort since Mastodon and PeerTube users can follow Plume blogs natively. Users on all these platforms see content from the other apps on the platform of their choice. And Mastodon, PeerTube, and Plume are just the beginning – as more platforms begin implementing ActivityPub, the federated network grows exponentially.&lt;/p&gt;
+&lt;h2&gt;Network effects that help users instead of harming them&lt;/h2&gt;
+&lt;p&gt;“Network effects” leaves kind of a dirty taste in my mouth. It’s usually used as a euphemism for “vendor lock-in”; the reason that Facebook became such a giant was that everyone needed to be on Facebook to participate in Facebook’s network. However, ActivityPub flips this equation on its head. As more platforms become ActivityPub compliant, it becomes more valuable for platforms implement ActivityPub: more apps means more users on the federated network, more posts to read and share, and more choice for users. This network effect discourages vendor lock-in. In the end, the users win.&lt;/p&gt;
+&lt;h2&gt;It’s going to be an uphill battle&lt;/h2&gt;
+&lt;p&gt;I hope I’ve convinced you of the radical impact that ActivityPub could have on the internet. But there are some significant barriers preventing widespread adoption. The thorniest one is money. &lt;/p&gt;
+&lt;p&gt;Why is money an issue? Aren’t Mastodon and PeerTube free and open-source? Well, first of all, open source projects need funding too (that’s a big topic that deserves its own blog post, so I’m leaving it alone for now). The bigger issue right now is user adoption. The ActivityPub network is only viable if people use it, and to compete in any significant way with Facebook and Twitter we need a lot of people to use it. To compete with the big guys, we need big money. We need to be able to spread the word through marketing and blogging, to engineer new ActivityPub applications, and to support people working full-time on bringing about this revolution.&lt;/p&gt;
+&lt;p&gt;I know this isn’t necessarily a popular view in the open-source world, but I see funding as a critical priority to bring about the vision that ActivityPub promises. Unfortunately, it’s not clear how to obtain it.&lt;/p&gt;
+&lt;p&gt;All the major ActivityPub-compliant applications I’ve written about are open source projects, built and run by volunteers with &lt;a href&#x3D;&quot;https://www.patreon.com/mastodon&quot;&gt;tiny budgets&lt;/a&gt;. Traditional social networking companies like Twitter and Facebook are funded by selling advertisements on their platform. But in order to make any significant revenue from ads, you need a centralized audience whose attention you control. Facebook needs to be able to say, “we have X billion users; give us your money and we will show them your ads”. Plus, the big social companies extract value from their users by segmenting them based on their behavior and interests, enabling micro-targeted ad campaigns.&lt;/p&gt;
+&lt;p&gt;None of that is possible when the users and content are spread across many servers and platforms. There is no centralized audience to segment and advertise to. We’ll need to rethink the fundamental business model of social networking if we want ActivityPub to take off.&lt;/p&gt;
+&lt;p&gt;That being said, I do think ActivityPub offers tremendous business value. It turns your corporate blog into a social network by offering native sharing, following, liking, and replying. And it does so on your customer’s terms, which not only prevents abusive, spammy content but also helps your company’s reputation with users and potential customers. These benefits are valuable, and I think there is a way to turn that value into funding.&lt;/p&gt;
+&lt;p&gt;It’s important to think about how to make this revolution happen. ActivityPub has the potential to change the way we think and act on the internet, in a way that encourages decentralization and puts users first again. That’s a vision worth fighting for.&lt;/p&gt;
+        &lt;/main&gt;
+        &lt;footer&gt;
+            © Jeremy Dormitzer 2020
+        &lt;/footer&gt;
+        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
+        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
+        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</description>
+            </item>
+            <item>
+                <title>A DSL for music</title>
+                <link>https://jeremydormitzer.com/blog/a-dsl-for-music.html</link>
+                <guid>https://jeremydormitzer.com/blog/a-dsl-for-music.html</guid>
+                <pubDate>Sat, 4 Aug 2018 20:00:00 EDT</pubDate>
+                <description>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
+        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
+        &lt;title&gt;A DSL for music&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;header&gt;
+            &lt;div class&#x3D;&quot;header-container&quot;&gt;
+                &lt;nav&gt;
+                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
+                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
+                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
+                &lt;/nav&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class&#x3D;&quot;container&quot;&gt;
+            &lt;h1&gt;A DSL for music&lt;/h1&gt;
+            &lt;h2&gt;Haskell School of Music&lt;/h2&gt;
+&lt;p&gt;I recently discovered Haskell School of Music. It’s a book about algorithmic music, which is awesome because: a) I’ve been obsessed with procedural generation for years and b) I like music as much as I like programming. So you can imagine my excitement when I discovered that someone had written a textbook combining my favorite areas of study.&lt;/p&gt;
+&lt;p&gt;Haskell School of Music is aimed at intermediate-level CS students, so it covers a lot of the basics of functional programming. It aims to be an introduction to the Haskell programming language while also thoroughly examining computer music. It starts simply by defining the data structures that represent music, and progresses to functional programming concepts, procedurally generating music, and doing signal processing and MIDI interfacing to actually play the songs.&lt;/p&gt;
+&lt;p&gt;I like Haskell, but I want to write music in Clojure. Why? First of all, because it’s the One True Language (it’s fine if you disagree with me – your opinion is valid even if it’s objectively incorrect). But more importantly, Clojure excels as an environment for writing &lt;a href&#x3D;&quot;https://en.wikipedia.org/wiki/Domain-specific_language&quot;&gt;domain-specific languages&lt;/a&gt; (DSLs). And as it turns out, writing algorithmic music using a DSL is a major win. Not only are DSLs expressive enough to portray creative expression, but DSLs written in Lisps are inherently extensible – whereas Haskell’s static typing adds barriers to extensibility. There’s also an excellent music synthesis library for Clojure, &lt;a href&#x3D;&quot;https://overtone.github.io/&quot;&gt;Overtone&lt;/a&gt;, that I want to be able to take advantage of.&lt;/p&gt;
+&lt;p&gt;Before we can explore what a DSL for music would look like, we need to understand how HSoM represents music as data.&lt;/p&gt;
+&lt;h2&gt;Music as data&lt;/h2&gt;
+&lt;p&gt;HSoM breaks music down into its component pieces. It represents music using Haskell data structures:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-haskell&quot;&gt;type Octave &#x3D; Int
+data PitchClass &#x3D; Cff | Cf | C | Dff -- ...etc, all the way to Bss
+type Pitch &#x3D; (PitchClass, Octave)
+type Duration &#x3D; Rational
+data Primitive a &#x3D; Note Duration a
+                 | Rest Duration
+data Control &#x3D;
+  Tempo Rational
+  Transpose Int
+  -- ...a bunch more
+data Music a &#x3D;
+  Prim (Primitive a)
+  | Music a :+: Music a
+  | Music a :&#x3D;: Music a
+  | Modify Control (Music a)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Many of these type declarations are straightfoward, but a couple bear further discussion. A &lt;code&gt;PitchClass&lt;/code&gt; is an &lt;a href&#x3D;&quot;https://wiki.haskell.org/Algebraic_data_type&quot;&gt;algebraic data type&lt;/a&gt; representing all of the pitches: C#, Ab, F, and so on. By pairing a pitch class with an octave, we get a &lt;code&gt;Pitch&lt;/code&gt;, which represents a specific note (for instance, middle C would be &lt;code&gt;(C, 4)&lt;/code&gt;. A &lt;code&gt;Primitive&lt;/code&gt; is a basic music building block, either a note or a rest. Note that it is &lt;a href&#x3D;&quot;https://wiki.haskell.org/Polymorphism&quot;&gt;polymorphic&lt;/a&gt;: this is so that we can define types like &lt;code&gt;Note Duration Pitch&lt;/code&gt; but also types like &lt;code&gt;Note Duration (Pitch, Loudness)&lt;/code&gt; so that we can attach additional data to a primitive if we need to. A control represents the concept of making a modification to some music by changing the tempo, transposing it, or otherwise changing the output while keeping the underlying notes the same.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;Music&lt;/code&gt; type is where things get really interesting. It’s an algebraic data type representing the concept of music in general. In fact, it’s powerful enough to fully represent any piece of music, from Hozier to Bach. A &lt;code&gt;Music&lt;/code&gt; value is one of four possible types: a &lt;code&gt;Prim&lt;/code&gt;, which is either a note or a rest; a &lt;code&gt;Modify&lt;/code&gt;, which takes another &lt;code&gt;Music&lt;/code&gt; as an argument and modifies it in some way; the &lt;code&gt;:+:&lt;/code&gt; &lt;a href&#x3D;&quot;https://downloads.haskell.org/~ghc/7.2.1/docs/html/users_guide/data-type-extensions.html&quot;&gt;infix constructor&lt;/a&gt;, which represents two separate &lt;code&gt;Music&lt;/code&gt; values played sequentially; and the &lt;code&gt;:&#x3D;:&lt;/code&gt; infix constructor, which represents two separate &lt;code&gt;Music&lt;/code&gt; values played simultaneously.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;Music&lt;/code&gt; type has some important properties. First, it’s polymorphic for the same reason that the &lt;code&gt;Primitive&lt;/code&gt; type is. This allows us to attach any type of data we want to music primitives, letting us express any musical concept (volume, gain, you name it).&lt;/p&gt;
+&lt;p&gt;Second, three out of its four constructors are recursive – they take other &lt;code&gt;Music&lt;/code&gt; values as arguments. This is the key that makes the data model so powerful. It allows you to model arbitrary configurations of notes, e.g. &lt;code&gt;Note 1/4 (C 4) :&#x3D;: Note 1/4 (E 4) :&#x3D;: Note 1/4 (G 4)&lt;/code&gt; is a C major triad, and that expression evaulates to a &lt;code&gt;Music&lt;/code&gt; value that can itself be passed to &lt;code&gt;Modify&lt;/code&gt;, &lt;code&gt;:+:&lt;/code&gt;, or &lt;code&gt;:&#x3D;:&lt;/code&gt; to weave it into a larger piece of music.&lt;/p&gt;
+&lt;p&gt;The result is an extraordinarily concise definition that still manages to encompass all possible pieces of music. Using these data structures, we can describe any song we can imagine.&lt;/p&gt;
+&lt;p&gt;But as powerful as this data type is, I wouldn’t call it a domain-specific language. The static type system makes it inflexible: how would you combine a &lt;code&gt;Note 1/8 ((C 4) 8)&lt;/code&gt;, representing a note with pitch and loudness, with a &lt;code&gt;Note 1/8 (E 4)&lt;/code&gt;, representing a note with just a pitch? Sure, you could write a function to convert from one to the other, but at that point you’ve lost elegance and flexibility.&lt;/p&gt;
+&lt;p&gt;Here’s where Clojure comes in.&lt;/p&gt;
+&lt;h2&gt;A DSL for music with Clojure&lt;/h2&gt;
+&lt;p&gt;What would a domain-specific language for music look like in Clojure? I found inspiration in the HTML templating library &lt;a href&#x3D;&quot;https://github.com/weavejester/hiccup&quot;&gt;Hiccup&lt;/a&gt;. Hiccup represents HTML documents (a graph of complex nested nodes, just like music values) using Clojure vectors, like so:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;[:div {:class &quot;foo&quot;} [:p &quot;foo&quot;]]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The Hiccup vectors are actually a DSL that can describe arbitrary HTML markup. Anything that can be expressed in HTML can be expressed using Hiccup. It straddles the line between data and code – the vector is flexible and expressive enough to represent any web page, but can be manipulated using standard Clojure library functions.&lt;/p&gt;
+&lt;p&gt;If we apply this idea to the data structure from HSoM, we end up with something like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;;; notes and rests are maps
+(def eighth-note-c
+  {:duration 1/8
+   :pitch [:C 4]})
+
+(def eighth-note-e
+  {:duration 1/8
+   :pitch [:E 4]})
+
+(def eighth-note-rest
+  {:duration 1/8})
+
+;; simultaneous music values
+[:&#x3D; eighth-note-c eighth-note-e]
+
+;; sequential music values
+[:+ eighth-note-c eighth-note-rest eighth-note-e]
+
+;; modifying music values
+[:modify
+ {:tempo 120      ;; the control
+  :transpose 3}
+ {:duration 1/8   ;; the note
+  :pitch [C 4]}]
+
+;; :&#x3D;, :+, and :modify can operate on any music value,
+;; including arbitrary nesting
+[:modify {:tempo 120}
+  [:+
+    [:&#x3D; {:duration 1/4
+         :pitch [D 4]}
+      {:duration 1/4
+       :pitch [F 4]}]
+    [:&#x3D; {:duration 1/4
+         :pitch [C 4]}
+      {:duration 1/4
+       :pitch [E 4]}]]]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;At first glance, this looks the same as the Haskell data types from HSoM. Both representations represent notes with pitch and duration; both use the &lt;code&gt;:modify&lt;/code&gt;, &lt;code&gt;:&#x3D;&lt;/code&gt; and &lt;code&gt;:+&lt;/code&gt; operators to compose music; both support recursive composition of any depth.&lt;/p&gt;
+&lt;p&gt;But the Clojure version is actually more expressive and flexible than the Haskell equivalent. A note can have any metadata we want attached:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;{:duration 1/4
+ :pitch [:C 4]
+ :loudness 6}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Our DSL has no problem composing notes with differing metadata:&lt;/p&gt;
+&lt;pre&gt;&lt;code class&#x3D;&quot;language-clojure&quot;&gt;[:+
+ {:duration 1/4
+  :pitch [:C 4]
+  :loudness 6}
+  :pitch [:Eb 4]
+  :staccato true}]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Furthermore, because Clojure is dynamically typed and supports &lt;a href&#x3D;&quot;https://en.wikipedia.org/wiki/Duck_typing&quot;&gt;duck typing&lt;/a&gt; via map keywords, we can write functions that operate on all notes and music values, even those with unexpected metadata.&lt;/p&gt;
+&lt;p&gt;Like the Hiccup vectors, our music vectors blur the boundary between a DSL and a data structure. The vectors are expressive enough to represent any musical concept, but can still be passed around and operated on by normal Clojure functions. As an added advantage, the vectors look similar enough to the HSoM data structures that I can easily follow along with the textbook using Clojure and Overtone.&lt;/p&gt;
+&lt;h2&gt;What&#x27;s next&lt;/h2&gt;
+&lt;p&gt;So I have a way to represent music in Clojure now. What’s next? Haskell School of Music ships with a library called Euterpea that knows how to turn the Music data structure into actual sound. So the next step for me is probably porting something like that to Clojure. I’m hoping to offload most of that work to Overtone. After that, I’ll explore algorithmic composition using the techniques outlined in HSoM. Stay tuned!&lt;/p&gt;
+        &lt;/main&gt;
+        &lt;footer&gt;
+            © Jeremy Dormitzer 2020
+        &lt;/footer&gt;
+        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
+        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
+        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
+        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</description>
+            </item>
+    </channel>
+</rss>

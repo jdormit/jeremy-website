@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/typography.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>unifyDB Dev Diary 1: the query system</title>
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
+        <nav>
+          <span>Jeremy Dormitzer</span>
+          <a href="/">Home</a>
+          <a href="/blog">Blog</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container">
+      <h1>unifyDB Dev Diary 1: the query system</h1>
+      <p>This is the first development diary for the database I'm writing, <a href="https://github.com/unifydb/unifydb">unifyDB</a>. I wrote a brief introduction to the project <a href="https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html">here</a>. In this post I'm going to talk about unifyDB's query system: what it does and how it works.</p>
+      <p>I want to start with an example of a unifyDB query, but to understand that we need to understand a bit about how unifyDB represents data. All data in unifyDB is stored as a collection of facts. A fact is a tuple with three pieces of information: an entity ID, an attribute name, and a value (actually, a fact has two additional fields, a transaction ID and an <code>added?</code> flag, but we won't worry about those until we talk about time-traveling queries, which deserves its own blog post). For example, we might represent some user records with the following set of facts:</p>
+      <pre><code>(1, "username", "harry")
+(1, "role", "user")
+(1, "preferred-theme", "light")
+(2, "username", "dumbledore")
+(2, "role", "user")
+(2, "role", "admin")
+(2, "preferred-theme", "light")
+(3, "username", "you-know-who")
+(3, "role", "user")
+(3, "role", "user")
+(3, "role", "admin")
+(3, "preferred-theme", "dark")
+</code></pre>
+      <p>This corresponds with the following records in a more conventional JSON format:</p>
+      <pre><code class="language-json">[
+    {
+        "id": 1,
+        "username": "harry",
+        "role": ["user"],
+        "preferred-theme": "light"
+    },
+    {
+        "id": 2,
+        "username": "dumbledore",
+        "role": ["user", "admin"],
+        "preferred-theme": "light"
+    },
+    {
+        "id": 3,
+        "username": "you-know-who",
+        "role": ["user", "admin"],
+        "preferred-theme": "dark"
+    }
+]
+</code></pre>
+      <p>(The astute reader will notice that there’s not actually a way to specify using a set of facts that <code>"role"</code> is a list but <code>"preferred-theme"</code> is a scalar value, i.e. the cardinality of an attribute. This requires another database feature, attribute schemas, that I’m going to save for another blog post.)</p>
+      <p>With that under our belt, let's take a look at an example unifyDB query. The unifyDB server understands query written in <a href="https://github.com/edn-format/edn">extensible data notation</a>, but database clients for different programming languages will allow developers to write queries that feel native to that language. Here's a query in EDN format:</p>
+      <pre><code class="language-clojure">{:find [?username]
+ :where [[?e :preferred-theme "light"]
+         [?e :username ?username]]}
+</code></pre>
+      <p>This query says, “find me the values of all the <code>username</code> attributes of entities whose <code>preferred-theme</code> is <code>"light"</code>”. If we run this query on the set of facts given above, it would return:</p>
+      <pre><code class="language-clojure">[["harry"]
+ ["dumbledore"]]
+</code></pre>
+      <p>Note that the return value is a list of lists — although our query only asked for one field, <code>username</code>, it could have asked for more, in which case each result in the result list would be a list with all the requested values. Once again, although unifyDB itself returns data in EDN format, client libraries will wrap that return value in whatever native data structure is convenient.</p>
+      <p>Let’s break that query down a bit. First, a bit of notation: any symbol that starts with a <code>?</code> is called a variable, and is similar in spirit to a variable in a programming language. The query above has two major pieces: a <code>:find</code> clause and a <code>:where</code> clause. The <code>:find</code> clause is straightforward: it asks to find the value of the variable <code>?username</code>. But how does it know what value that variable has? That’s where things get interesting.</p>
+      <p>Let's take a closer look at the <code>:where</code> clause:</p>
+      <pre><code class="language-clojure">:where [[?e :preferred-theme "light"]
+        [?e :username ?username]]
+</code></pre>
+      <p>It is a list of two relations - that is, expressions which assert some relationship between variables. The first relation, <code>[?e :preferred-theme "light"]</code>, declares that there is some entity <code>?e</code> whose <code>:preferred-theme</code> attribute has value <code>"light"</code>. The second relation is slightly more abstract, declaring a relation between some entity <code>?e</code> and the value of its <code>:username</code> attribute, which it assigns to the variable <code>?username</code>.</p>
+      <p>Notice that both relations share a variable, <code>?e</code>. This is where the magic happens! When two relations share a variable, they are said to <em>unify</em>. This means that the query engine finds all facts that satisfy <em>both</em> relations for some entity <code>?e</code>. In other words, unifyDB will find all sets of facts such that the facts share an entity <code>?e</code>, have one fact with attribute <code>:preferred-theme</code> and value <code>"light"</code>, and have another fact with attribute <code>:username</code> and any value.</p>
+      <p>The result of this unification process is a set of variable bindings, calculated from the facts that satisfy the query relation. In our example, we find that the following set of facts satisfies the query relation:</p>
+      <pre><code>(1, "username", "harry")
+(1, "preferred-theme", "light")
+(2, "username", "dumbledore")
+(2, "preferred-theme", "light")
+</code></pre>
+      <p>Unifying these facts with the variables in the <code>:where</code> clause yields the following set of bindings:</p>
+      <pre><code>{
+    ?e: 1,
+    ?username: "harry"
+},
+{
+    ?e: 2,
+    ?username: "dumbledore"
+}
+</code></pre>
+      <p>Finally, since our <code>:find</code> clause asks only for the variable <code>?username</code>, we look up that variable in the binding set, returning one result for each binding in the set:</p>
+      <pre><code class="language-clojure">[["harry"]
+ ["dumbledore"]]
+</code></pre>
+      <p>This unification approach to querying makes the database particularly powerful. Although in this example we unified on the entity ID, we can also unify on the attribute name, value, or some combination of all three. This gives unifyDB the ability to function as a document store (looking up the “documents”, i.e. entities, which have attributes and values matching some pattern); or as a column-oriented database, looking for all the values of a certain attribute or even all the attributes that have a certain value. Of course, most apps will use a combination of all these different querying approaches, letting the database work for them in whatever way they need for a particular feature.</p>
+      <p>In fact, this is only half of the query engine, since it also supports adding <em>rules</em> that let you compute new facts from existing facts in the database, but that is complex enough to warrant its own post.</p>
+      <p>There is a lot more I could write about here, but this is running kind of long so I’m going to leave it at this for now. You can follow the development of unifyDB <a href="https://github.com/unifydb/unifydb/">on GitHub</a> (the query engine is implemented <a href="https://github.com/unifydb/unifydb/blob/master/src/unifydb/query.clj">here</a> and unification is implemented <a href="https://github.com/unifydb/unifydb/blob/master/src/unifydb/unify.clj">here</a>). If you are interested in this topic and want to dive into the implementation, I based my work on the excellent logical database engine in <a href="https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-29.html#%25_sec_4.4">chapter 4.4 of Structure and Interpretation of Computer Programs</a>.</p>
+      <p>As always, if you want to know more about unifyDB, have questions about this post or just want to geek out, hit me up <a href="https://twitter.com/jeremydormitzer">on Twitter</a>.</p>
+    </main>
+    <footer>© Jeremy Dormitzer 2020</footer>
+    <link rel="preconnect" href="https://fonts.gstatic.com"><link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&#x26;display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/highlight/default.css">
+    <script src="/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
