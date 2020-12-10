@@ -6,8 +6,8 @@
         <language>en-us</language>
         <copyright>© Jeremy Dormitzer 2020</copyright>
         <ttl>60</ttl>
-        <lastBuildDate>Thu, 10 Dec 2020 12:42:47 EST</lastBuildDate>
-        <pubDate>Thu, 10 Dec 2020 12:42:47 EST</pubDate>
+        <lastBuildDate>Thu, 10 Dec 2020 13:30:30 EST</lastBuildDate>
+        <pubDate>Thu, 10 Dec 2020 13:30:30 EST</pubDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/obelix-site-builder/obelix</generator>
             <item>
@@ -15,28 +15,7 @@
                 <link>https://jeremydormitzer.com/blog/unifydb-dev-diary-1-query.html</link>
                 <guid>https://jeremydormitzer.com/blog/unifydb-dev-diary-1-query.html</guid>
                 <pubDate>Fri, 2 Oct 2020 20:00:00 EDT</pubDate>
-                <description>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
-        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
-        &lt;title&gt;unifyDB Dev Diary 1: the query system&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;header&gt;
-            &lt;div class&#x3D;&quot;header-container&quot;&gt;
-                &lt;nav&gt;
-                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
-                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
-                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
-                &lt;/nav&gt;
-            &lt;/div&gt;
-        &lt;/header&gt;
-        &lt;main class&#x3D;&quot;container&quot;&gt;
-            &lt;h1&gt;unifyDB Dev Diary 1: the query system&lt;/h1&gt;
-            &lt;p&gt;This is the first development diary for the database I&#x27;m writing, &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb&quot;&gt;unifyDB&lt;/a&gt;. I wrote a brief introduction to the project &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html&quot;&gt;here&lt;/a&gt;. In this post I&#x27;m going to talk about unifyDB&#x27;s query system: what it does and how it works.&lt;/p&gt;
+                <description>&lt;p&gt;This is the first development diary for the database I&#x27;m writing, &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb&quot;&gt;unifyDB&lt;/a&gt;. I wrote a brief introduction to the project &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html&quot;&gt;here&lt;/a&gt;. In this post I&#x27;m going to talk about unifyDB&#x27;s query system: what it does and how it works.&lt;/p&gt;
 &lt;p&gt;I want to start with an example of a unifyDB query, but to understand that we need to understand a bit about how unifyDB represents data. All data in unifyDB is stored as a collection of facts. A fact is a tuple with three pieces of information: an entity ID, an attribute name, and a value (actually, a fact has two additional fields, a transaction ID and an &lt;code&gt;added?&lt;/code&gt; flag, but we won&#x27;t worry about those until we talk about time-traveling queries, which deserves its own blog post). For example, we might represent some user records with the following set of facts:&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;(1, &quot;username&quot;, &quot;harry&quot;)
 (1, &quot;role&quot;, &quot;user&quot;)
@@ -114,47 +93,14 @@
 &lt;p&gt;This unification approach to querying makes the database particularly powerful. Although in this example we unified on the entity ID, we can also unify on the attribute name, value, or some combination of all three. This gives unifyDB the ability to function as a document store (looking up the “documents”, i.e. entities, which have attributes and values matching some pattern); or as a column-oriented database, looking for all the values of a certain attribute or even all the attributes that have a certain value. Of course, most apps will use a combination of all these different querying approaches, letting the database work for them in whatever way they need for a particular feature.&lt;/p&gt;
 &lt;p&gt;In fact, this is only half of the query engine, since it also supports adding &lt;em&gt;rules&lt;/em&gt; that let you compute new facts from existing facts in the database, but that is complex enough to warrant its own post.&lt;/p&gt;
 &lt;p&gt;There is a lot more I could write about here, but this is running kind of long so I’m going to leave it at this for now. You can follow the development of unifyDB &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb/&quot;&gt;on GitHub&lt;/a&gt; (the query engine is implemented &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb/blob/master/src/unifydb/query.clj&quot;&gt;here&lt;/a&gt; and unification is implemented &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb/blob/master/src/unifydb/unify.clj&quot;&gt;here&lt;/a&gt;). If you are interested in this topic and want to dive into the implementation, I based my work on the excellent logical database engine in &lt;a href&#x3D;&quot;https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-29.html#%25_sec_4.4&quot;&gt;chapter 4.4 of Structure and Interpretation of Computer Programs&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;As always, if you want to know more about unifyDB, have questions about this post or just want to geek out, hit me up &lt;a href&#x3D;&quot;https://twitter.com/jeremydormitzer&quot;&gt;on Twitter&lt;/a&gt;.&lt;/p&gt;
-        &lt;/main&gt;
-        &lt;footer&gt;
-            © Jeremy Dormitzer 2020
-        &lt;/footer&gt;
-        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
-        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
-        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
-        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</description>
+&lt;p&gt;As always, if you want to know more about unifyDB, have questions about this post or just want to geek out, hit me up &lt;a href&#x3D;&quot;https://twitter.com/jeremydormitzer&quot;&gt;on Twitter&lt;/a&gt;.&lt;/p&gt;</description>
             </item>
             <item>
                 <title>unifyDB Dev Diary 0: I’m building a database!</title>
                 <link>https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html</link>
                 <guid>https://jeremydormitzer.com/blog/unifydb-dev-diary-0-intro.html</guid>
                 <pubDate>Sat, 8 Aug 2020 20:00:00 EDT</pubDate>
-                <description>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
-        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
-        &lt;title&gt;unifyDB Dev Diary 0: I’m building a database!&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;header&gt;
-            &lt;div class&#x3D;&quot;header-container&quot;&gt;
-                &lt;nav&gt;
-                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
-                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
-                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
-                &lt;/nav&gt;
-            &lt;/div&gt;
-        &lt;/header&gt;
-        &lt;main class&#x3D;&quot;container&quot;&gt;
-            &lt;h1&gt;unifyDB Dev Diary 0: I’m building a database!&lt;/h1&gt;
-            &lt;p&gt;Phew, it’s been a while! Over a year, in fact. And what a wild year! Lots of good things happened: I got married, got a new job that I love, moved to a nice new apartment. Also some not-so-nice things, but since you are all living through 2020 just like me I don’t think I need to go into those. But I have still found some side-project time, and I’d like to start talking about what I’m building.&lt;/p&gt;
+                <description>&lt;p&gt;Phew, it’s been a while! Over a year, in fact. And what a wild year! Lots of good things happened: I got married, got a new job that I love, moved to a nice new apartment. Also some not-so-nice things, but since you are all living through 2020 just like me I don’t think I need to go into those. But I have still found some side-project time, and I’d like to start talking about what I’m building.&lt;/p&gt;
 &lt;p&gt;So – I’m excited to announce that I’m building a database! I’m calling it unifyDB. It’s going to be a general-purpose database with some pretty interesting properties:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;It maintains a complete history of changes to all entities stored in the database&lt;/li&gt;
@@ -166,47 +112,14 @@
 &lt;p&gt;I’m designing unifyDB to be as modular as possible – I want it to be as easy to run it as a single node on your local machine as it is to run in an autoscaling cluster on your cloud of choice.&lt;/p&gt;
 &lt;p&gt;I’ve actually been working on this on and off for over a year. The code lives in &lt;a href&#x3D;&quot;https://github.com/unifydb/unifydb&quot;&gt;a GitHub repository&lt;/a&gt;. Fair warning: it’s mostly undocumented and nowhere close to being finished. So far, I’ve written the query engine, the transaction handler, the web server (yes, it has an HTTP interface), and a bunch of underlying infrastructure. So as it currently stands, unifyDB is able to store data (in-memory since I haven’t built the storage layer yet) and issue history-aware queries. I’m in the middle of writing the authentication mechanism. After that, it’s on to the storage layer, then most likely the access control layer.&lt;/p&gt;
 &lt;p&gt;I’m going to start publishing monthly development diaries detailing the more interesting aspects of database. I’ll start with a post about the query system implementation sometime in the next couple of weeks. Sound interesting? Follow along &lt;a href&#x3D;&quot;https://feedly.com/i/subscription/feed%2Fhttps%3A%2F%2Fjeremydormitzer.com%2Fblog%2Ffeed.xml&quot;&gt;on Feedly&lt;/a&gt; or &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/feed.xml&quot;&gt;your RSS reader of choice&lt;/a&gt;!.&lt;/p&gt;
-&lt;p&gt;In the meantime, if you want to know more about unifyDB or just want to geek out, hit me up &lt;a href&#x3D;&quot;https://twitter.com/jeremydormitzer&quot;&gt;on Twitter&lt;/a&gt;.&lt;/p&gt;
-        &lt;/main&gt;
-        &lt;footer&gt;
-            © Jeremy Dormitzer 2020
-        &lt;/footer&gt;
-        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
-        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
-        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
-        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</description>
+&lt;p&gt;In the meantime, if you want to know more about unifyDB or just want to geek out, hit me up &lt;a href&#x3D;&quot;https://twitter.com/jeremydormitzer&quot;&gt;on Twitter&lt;/a&gt;.&lt;/p&gt;</description>
             </item>
             <item>
                 <title>More than JSON: ActivityPub and JSON-LD</title>
                 <link>https://jeremydormitzer.com/blog/more-than-json.html</link>
                 <guid>https://jeremydormitzer.com/blog/more-than-json.html</guid>
                 <pubDate>Mon, 22 Apr 2019 20:00:00 EDT</pubDate>
-                <description>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
-        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
-        &lt;title&gt;More than JSON: ActivityPub and JSON-LD&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;header&gt;
-            &lt;div class&#x3D;&quot;header-container&quot;&gt;
-                &lt;nav&gt;
-                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
-                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
-                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
-                &lt;/nav&gt;
-            &lt;/div&gt;
-        &lt;/header&gt;
-        &lt;main class&#x3D;&quot;container&quot;&gt;
-            &lt;h1&gt;More than JSON: ActivityPub and JSON-LD&lt;/h1&gt;
-            &lt;blockquote&gt;
+                <description>&lt;blockquote&gt;
 &lt;p&gt;&lt;em&gt;In which our hero discovers the power of normalization and JSON-LD&lt;/em&gt;&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2&gt;The problem with JSON&lt;/h2&gt;
@@ -286,47 +199,14 @@
 ]
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Because the object attribute is specified in the &lt;a href&#x3D;&quot;https://www.w3.org/ns/activitystreams.jsonld&quot;&gt;ActivityStreams JSON-LD vocabulary&lt;/a&gt; to be of &lt;code&gt;@type&lt;/code&gt;: &lt;code&gt;@id&lt;/code&gt;, the expansion process was able to infer that &lt;code&gt;object&lt;/code&gt; ought to be, well, an object. This neatly solves the problem of “is this string attribute actually a reference” – all references are clearly marked by their &lt;code&gt;@id&lt;/code&gt; attributes now. Plus, this allows us to be smarter about when we dereference an object – for example, we can defer dereferencing until we actually need to access the attributes of the linked object. This approach also addresses the problem of network errors when dereferencing – if we can’t dereference, we just end up with an object that has only an &lt;code&gt;@id&lt;/code&gt;, which can still be handled gracefully by the application.&lt;/p&gt;
-&lt;p&gt;Hopefully this gave some insight into the types of challenges involved with building ActivityPub-powered applications and the point of JSON-LD. Have questions? Did I do something wrong? Let me know in the comments or on the &lt;a href&#x3D;&quot;https://mastodon.technology/@jdormit&quot;&gt;Fediverse&lt;/a&gt;!&lt;/p&gt;
-        &lt;/main&gt;
-        &lt;footer&gt;
-            © Jeremy Dormitzer 2020
-        &lt;/footer&gt;
-        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
-        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
-        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
-        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</description>
+&lt;p&gt;Hopefully this gave some insight into the types of challenges involved with building ActivityPub-powered applications and the point of JSON-LD. Have questions? Did I do something wrong? Let me know in the comments or on the &lt;a href&#x3D;&quot;https://mastodon.technology/@jdormit&quot;&gt;Fediverse&lt;/a&gt;!&lt;/p&gt;</description>
             </item>
             <item>
                 <title>ActivityPub: Good enough for jazz</title>
                 <link>https://jeremydormitzer.com/blog/activitypub-good-enough-for-jazz.html</link>
                 <guid>https://jeremydormitzer.com/blog/activitypub-good-enough-for-jazz.html</guid>
                 <pubDate>Sun, 6 Jan 2019 19:00:00 EST</pubDate>
-                <description>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
-        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
-        &lt;title&gt;ActivityPub: Good enough for jazz&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;header&gt;
-            &lt;div class&#x3D;&quot;header-container&quot;&gt;
-                &lt;nav&gt;
-                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
-                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
-                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
-                &lt;/nav&gt;
-            &lt;/div&gt;
-        &lt;/header&gt;
-        &lt;main class&#x3D;&quot;container&quot;&gt;
-            &lt;h1&gt;ActivityPub: Good enough for jazz&lt;/h1&gt;
-            &lt;img alt&#x3D;&quot;activitypub&quot; src&#x3D;&quot;/images/activitypub.png&quot; /&gt;
+                <description>&lt;img alt&#x3D;&quot;activitypub&quot; src&#x3D;&quot;/images/activitypub.png&quot; /&gt;
 &lt;p&gt;&lt;a href&#x3D;&quot;https://pleroma.site/users/kaniini&quot;&gt;Kaniini&lt;/a&gt;, one of the lead developers of Pleroma, recently published a blog post called &lt;a href&#x3D;&quot;https://blog.dereferenced.org/activitypub-the-worse-is-better-approach-to-federated-social-networking&quot;&gt;ActivityPub: The “Worse is Better” Approach to Federated Social Networking&lt;/a&gt;. It’s a critique of the security and safety of the &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/what-is-activitypub-and-how-will-it-change-the-internet/&quot;&gt;ActivityPub protocol&lt;/a&gt;. They make some good points:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;ActivityPub doesn’t support fine-grained access control checks, e.g. I want someone to be able to see my posts but not respond to them&lt;/li&gt;
@@ -337,47 +217,14 @@
 &lt;p&gt;Now, I’m not suggesting that we stop development on the protocol. But future improvements to it should be iterative, building on the existing specification, and backward compatible whenever possible. For example, by all means let’s come up with a better access control model for ActivityPub – but we should also come up with a compatibility layer that assumes some default set of access capabilities for implementations that haven’t upgraded. This lets us move forward without leaving the protocol’s participants behind, preserving ActivityPub’s value.&lt;/p&gt;
 &lt;p&gt;We are in good company here. This model is exactly how HTTP became the protocol that powers the internet. If you have the time, check out this &lt;a href&#x3D;&quot;https://hpbn.co/brief-history-of-http/&quot;&gt;excellent (brief) history&lt;/a&gt; of the HTTP protocol. Here are the highlights: Tim Berners-Lee came up with HTTP 0.9, which was an extremely simple protocol that allowed clients to request a resource and receive a response. HTTP 1.0 added headers and a variety of other features. HTTP 1.1 added performance optimizations and fixed ambiguities in the 1.0 specification.&lt;/p&gt;
 &lt;p&gt;Critically, all of these versions of HTTP were similar enough that a server that supported HTTP 1.1 could trivially also support HTTP 1.0 and 0.9 (because 0.9 is actually a subset of 1.1). In fact, the Apache and Nginx web servers, which power most websites on the internet, still support HTTP 0.9! By designing and iterating on HTTP in a way that preserved backward compatibility, the early web pioneers were able to build a robust, performant, secure protocol while still encouraging global adoption.&lt;/p&gt;
-&lt;p&gt;If we want the Fediverse to be just as robust, performant, secure, and globally adopted, we should take the same approach.&lt;/p&gt;
-        &lt;/main&gt;
-        &lt;footer&gt;
-            © Jeremy Dormitzer 2020
-        &lt;/footer&gt;
-        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
-        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
-        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
-        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</description>
+&lt;p&gt;If we want the Fediverse to be just as robust, performant, secure, and globally adopted, we should take the same approach.&lt;/p&gt;</description>
             </item>
             <item>
                 <title>Announcing Pterotype</title>
                 <link>https://jeremydormitzer.com/blog/announcing-pterotype.html</link>
                 <guid>https://jeremydormitzer.com/blog/announcing-pterotype.html</guid>
                 <pubDate>Wed, 14 Nov 2018 19:00:00 EST</pubDate>
-                <description>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
-        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
-        &lt;title&gt;Announcing Pterotype&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;header&gt;
-            &lt;div class&#x3D;&quot;header-container&quot;&gt;
-                &lt;nav&gt;
-                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
-                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
-                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
-                &lt;/nav&gt;
-            &lt;/div&gt;
-        &lt;/header&gt;
-        &lt;main class&#x3D;&quot;container&quot;&gt;
-            &lt;h1&gt;Announcing Pterotype&lt;/h1&gt;
-            &lt;img alt&#x3D;&quot;a cute pterodactyl&quot; src&#x3D;&quot;/images/pterotype.png&quot; /&gt;
+                <description>&lt;img alt&#x3D;&quot;a cute pterodactyl&quot; src&#x3D;&quot;/images/pterotype.png&quot; /&gt;
 &lt;p&gt;In &lt;a href&#x3D;&quot;https://jeremydormitzer.com/blog/what-is-activitypub.html&quot;&gt;my last post&lt;/a&gt;, I wrote about an emerging web standard called ActivityPub that lets web services interoperate and form a federated, open social network. I made an argument about how important this new standard is – how it tears down walled gardens, discourages monopolies and centralization, and encourages user freedom.&lt;/p&gt;
 &lt;p&gt;I genuinely believe what I wrote, too. And so, to put my money where my mouth is, I’m excited to announce &lt;a href&#x3D;&quot;https://getpterotype.com/&quot;&gt;Pterotype&lt;/a&gt;! It’s a WordPress plugin that gives your blog an ActivityPub feed so that it can take advantage of all the benefits ActivityPub has to offer. &lt;/p&gt;
 &lt;h2&gt;Why WordPress?&lt;/h2&gt;
@@ -391,47 +238,14 @@
 &lt;p&gt;Yes, with caveats. Pterotype is in early beta. The core features are in there – your blog will get a Fediverse profile, posts will federate, and comments will sync up – but it’s a pretty fiddly (and sometimes buggy) experience at the moment. If you do want to try it out, the plugin is in the &lt;a href&#x3D;&quot;https://wordpress.org/plugins/pterotype/&quot;&gt;plugin repository&lt;/a&gt;. If you install it on your blog, please consider &lt;a href&#x3D;&quot;https://getpterotype.com/beta&quot;&gt;signing up for the beta program&lt;/a&gt; as well – it’s how I’m collecting feedback and bug reports so I can make the plugin the best that it can be.&lt;/p&gt;
 &lt;p&gt;If you’d rather just follow my progress and dive in when it’s finished, that’s fine too! I made my development roadmap &lt;a href&#x3D;&quot;https://getpterotype.com/roadmap&quot;&gt;publicly available&lt;/a&gt;, and the plugin itself is open-source &lt;a href&#x3D;&quot;https://github.com/pterotype-project/pterotype&quot;&gt;on GitHub&lt;/a&gt;. I’m currently doing a major refactor, pulling out all of the ActivityPub-related logic &lt;a href&#x3D;&quot;https://github.com/pterotype-project/activitypub-php&quot;&gt;into its own library&lt;/a&gt; – once that’s done, it’ll be back to business as usual adding features and stability to Pterotype.&lt;/p&gt;
 &lt;p&gt;If you’ve read this far, and this project resonates with you, then you might be interested in &lt;a href&#x3D;&quot;https://www.patreon.com/pterotype&quot;&gt;becoming a sponsor on Patreon&lt;/a&gt;. Pterotype is free and open-source, so this is its only source of funding. For moment-to-moment updates, you can &lt;a href&#x3D;&quot;https://mastodon.technology/@jdormit&quot;&gt;follow me on Mastodon&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;See you on the Fediverse!&lt;/p&gt;
-        &lt;/main&gt;
-        &lt;footer&gt;
-            © Jeremy Dormitzer 2020
-        &lt;/footer&gt;
-        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
-        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
-        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
-        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</description>
+&lt;p&gt;See you on the Fediverse!&lt;/p&gt;</description>
             </item>
             <item>
                 <title>What is ActivityPub, and how will it change the internet?</title>
                 <link>https://jeremydormitzer.com/blog/what-is-activitypub.html</link>
                 <guid>https://jeremydormitzer.com/blog/what-is-activitypub.html</guid>
                 <pubDate>Fri, 14 Sep 2018 20:00:00 EDT</pubDate>
-                <description>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
-        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
-        &lt;title&gt;What is ActivityPub, and how will it change the internet?&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;header&gt;
-            &lt;div class&#x3D;&quot;header-container&quot;&gt;
-                &lt;nav&gt;
-                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
-                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
-                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
-                &lt;/nav&gt;
-            &lt;/div&gt;
-        &lt;/header&gt;
-        &lt;main class&#x3D;&quot;container&quot;&gt;
-            &lt;h1&gt;What is ActivityPub, and how will it change the internet?&lt;/h1&gt;
-            &lt;img alt&#x3D;&quot;a network-shaped board game&quot; src&#x3D;&quot;/images/board-game.jpg&quot; /&gt;
+                <description>&lt;img alt&#x3D;&quot;a network-shaped board game&quot; src&#x3D;&quot;/images/board-game.jpg&quot; /&gt;
 &lt;h2&gt;A new kind of social network&lt;/h2&gt;
 &lt;p&gt;There’s a new social network in town. It’s called &lt;a href&#x3D;&quot;https://joinmastodon.org/&quot;&gt;Mastodon&lt;/a&gt;. You might have even heard of it. On the surface, Mastodon feels a lot like Twitter: you post “toots” up to 500 characters; you follow other users who say interesting things; you can favorite a toot or re-post it to your own followers. But Mastodon is different from Twitter in some fundamental ways. It offers many more ways for users to control the posts they see. It fosters awareness of the effect your posts have on others through a content warning system and encourages accessibility with captioned images. At its core, though, there’s a more fundamental difference from existing social networks: Mastodon isn’t controlled by a single corporation. Anyone can operate a Mastodon server, and users on any server can interact with users on any other Mastodon server.&lt;/p&gt;
 &lt;p&gt;This decentralized model is called federation. Email is a good analogy here: I can have a Gmail account and you can have an Outlook account, but we can still send mail to each other. In the same way, I can have an account on &lt;a href&#x3D;&quot;https://mastodon.technology/invite/JguyVqcL&quot;&gt;mastodon.technology&lt;/a&gt;, and you can have an account on &lt;a href&#x3D;&quot;https://mastodon.social/&quot;&gt;mastodon.social&lt;/a&gt;, but we can still follow each other, like and re-post each other’s toots, and @mention each other. Just like Gmail servers know how to talk to Outlook servers, Mastodon servers know how to talk to other Mastodon servers (if you hear people talking about a Mastodon “instance”, they mean server). And just like Gmail and Outlook are controlled by different corporations, Mastodon servers are owned and operated by many different people and organizations. If you wanted, you could &lt;a href&#x3D;&quot;https://github.com/tootsuite/documentation#running-mastodon&quot;&gt;host your own Mastodon instance&lt;/a&gt;!&lt;/p&gt;
@@ -456,47 +270,14 @@
 &lt;p&gt;All the major ActivityPub-compliant applications I’ve written about are open source projects, built and run by volunteers with &lt;a href&#x3D;&quot;https://www.patreon.com/mastodon&quot;&gt;tiny budgets&lt;/a&gt;. Traditional social networking companies like Twitter and Facebook are funded by selling advertisements on their platform. But in order to make any significant revenue from ads, you need a centralized audience whose attention you control. Facebook needs to be able to say, “we have X billion users; give us your money and we will show them your ads”. Plus, the big social companies extract value from their users by segmenting them based on their behavior and interests, enabling micro-targeted ad campaigns.&lt;/p&gt;
 &lt;p&gt;None of that is possible when the users and content are spread across many servers and platforms. There is no centralized audience to segment and advertise to. We’ll need to rethink the fundamental business model of social networking if we want ActivityPub to take off.&lt;/p&gt;
 &lt;p&gt;That being said, I do think ActivityPub offers tremendous business value. It turns your corporate blog into a social network by offering native sharing, following, liking, and replying. And it does so on your customer’s terms, which not only prevents abusive, spammy content but also helps your company’s reputation with users and potential customers. These benefits are valuable, and I think there is a way to turn that value into funding.&lt;/p&gt;
-&lt;p&gt;It’s important to think about how to make this revolution happen. ActivityPub has the potential to change the way we think and act on the internet, in a way that encourages decentralization and puts users first again. That’s a vision worth fighting for.&lt;/p&gt;
-        &lt;/main&gt;
-        &lt;footer&gt;
-            © Jeremy Dormitzer 2020
-        &lt;/footer&gt;
-        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
-        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
-        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
-        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</description>
+&lt;p&gt;It’s important to think about how to make this revolution happen. ActivityPub has the potential to change the way we think and act on the internet, in a way that encourages decentralization and puts users first again. That’s a vision worth fighting for.&lt;/p&gt;</description>
             </item>
             <item>
                 <title>A DSL for music</title>
                 <link>https://jeremydormitzer.com/blog/a-dsl-for-music.html</link>
                 <guid>https://jeremydormitzer.com/blog/a-dsl-for-music.html</guid>
                 <pubDate>Sat, 4 Aug 2018 20:00:00 EDT</pubDate>
-                <description>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset&#x3D;&quot;utf-8&quot;&gt;
-        &lt;meta name&#x3D;&quot;viewport&quot; content&#x3D;&quot;width&#x3D;device-width, initial-scale&#x3D;1&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/typography.css&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/styles.css&quot;&gt;
-        &lt;title&gt;A DSL for music&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;header&gt;
-            &lt;div class&#x3D;&quot;header-container&quot;&gt;
-                &lt;nav&gt;
-                    &lt;span&gt;Jeremy Dormitzer&lt;/span&gt;
-                    &lt;a href&#x3D;&quot;/&quot;&gt;Home&lt;/a&gt;
-                    &lt;a href&#x3D;&quot;/blog&quot;&gt;Blog&lt;/a&gt;
-                &lt;/nav&gt;
-            &lt;/div&gt;
-        &lt;/header&gt;
-        &lt;main class&#x3D;&quot;container&quot;&gt;
-            &lt;h1&gt;A DSL for music&lt;/h1&gt;
-            &lt;h2&gt;Haskell School of Music&lt;/h2&gt;
+                <description>&lt;h2&gt;Haskell School of Music&lt;/h2&gt;
 &lt;p&gt;I recently discovered Haskell School of Music. It’s a book about algorithmic music, which is awesome because: a) I’ve been obsessed with procedural generation for years and b) I like music as much as I like programming. So you can imagine my excitement when I discovered that someone had written a textbook combining my favorite areas of study.&lt;/p&gt;
 &lt;p&gt;Haskell School of Music is aimed at intermediate-level CS students, so it covers a lot of the basics of functional programming. It aims to be an introduction to the Haskell programming language while also thoroughly examining computer music. It starts simply by defining the data structures that represent music, and progresses to functional programming concepts, procedurally generating music, and doing signal processing and MIDI interfacing to actually play the songs.&lt;/p&gt;
 &lt;p&gt;I like Haskell, but I want to write music in Clojure. Why? First of all, because it’s the One True Language (it’s fine if you disagree with me – your opinion is valid even if it’s objectively incorrect). But more importantly, Clojure excels as an environment for writing &lt;a href&#x3D;&quot;https://en.wikipedia.org/wiki/Domain-specific_language&quot;&gt;domain-specific languages&lt;/a&gt; (DSLs). And as it turns out, writing algorithmic music using a DSL is a major win. Not only are DSLs expressive enough to portray creative expression, but DSLs written in Lisps are inherently extensible – whereas Haskell’s static typing adds barriers to extensibility. There’s also an excellent music synthesis library for Clojure, &lt;a href&#x3D;&quot;https://overtone.github.io/&quot;&gt;Overtone&lt;/a&gt;, that I want to be able to take advantage of.&lt;/p&gt;
@@ -587,19 +368,7 @@ data Music a &#x3D;
 &lt;p&gt;Furthermore, because Clojure is dynamically typed and supports &lt;a href&#x3D;&quot;https://en.wikipedia.org/wiki/Duck_typing&quot;&gt;duck typing&lt;/a&gt; via map keywords, we can write functions that operate on all notes and music values, even those with unexpected metadata.&lt;/p&gt;
 &lt;p&gt;Like the Hiccup vectors, our music vectors blur the boundary between a DSL and a data structure. The vectors are expressive enough to represent any musical concept, but can still be passed around and operated on by normal Clojure functions. As an added advantage, the vectors look similar enough to the HSoM data structures that I can easily follow along with the textbook using Clojure and Overtone.&lt;/p&gt;
 &lt;h2&gt;What&#x27;s next&lt;/h2&gt;
-&lt;p&gt;So I have a way to represent music in Clojure now. What’s next? Haskell School of Music ships with a library called Euterpea that knows how to turn the Music data structure into actual sound. So the next step for me is probably porting something like that to Clojure. I’m hoping to offload most of that work to Overtone. After that, I’ll explore algorithmic composition using the techniques outlined in HSoM. Stay tuned!&lt;/p&gt;
-        &lt;/main&gt;
-        &lt;footer&gt;
-            © Jeremy Dormitzer 2020
-        &lt;/footer&gt;
-        &lt;link rel&#x3D;&quot;preconnect&quot; href&#x3D;&quot;https://fonts.gstatic.com&quot;&gt;
-        &lt;link href&#x3D;&quot;https://fonts.googleapis.com/css2?family&#x3D;Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&amp;display&#x3D;swap&quot; rel&#x3D;&quot;stylesheet&quot;&gt;
-        &lt;link rel&#x3D;&quot;stylesheet&quot; href&#x3D;&quot;/css/highlight/default.css&quot;&gt;
-        &lt;script src&#x3D;&quot;/js/highlight.pack.js&quot;&gt;&lt;/script&gt;
-        &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</description>
+&lt;p&gt;So I have a way to represent music in Clojure now. What’s next? Haskell School of Music ships with a library called Euterpea that knows how to turn the Music data structure into actual sound. So the next step for me is probably porting something like that to Clojure. I’m hoping to offload most of that work to Overtone. After that, I’ll explore algorithmic composition using the techniques outlined in HSoM. Stay tuned!&lt;/p&gt;</description>
             </item>
     </channel>
 </rss>
