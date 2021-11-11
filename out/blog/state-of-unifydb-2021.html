@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/typography.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>State of unifyDB: 2021</title>
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
+        <nav>
+          <span>Jeremy Dormitzer</span>
+          <a href="/">Home</a>
+          <a href="/blog">Blog</a>
+          <div class="social-icons"><a href="/blog/feed.xml"><img src="/images/rss.svg"></a></div>
+        </nav>
+      </div>
+    </header>
+    <main class="container">
+      <h1>State of unifyDB: 2021</h1>
+      <p>2021 is almost over! And it's been over a year since I've written anything about <a href="./unifydb-dev-diary-0-intro.html">my work-in-progress graph database unifyDB</a>. BUT just because I'm bad at blogging doesn't mean I haven't made any progress. In fact, a bunch of exciting stuff happened for unifyDB in 2021, and I'm going to info-dump it all on you 🙃.</p>
+      <h2>Aggregation, sorting and limiting</h2>
+      <p>This one was really exciting, as it marked a huge step towards making unifyDB truly useful. I added the ability to aggregate, sort, and limit query results. Here's what the syntax looks like:</p>
+      <pre><code class="language-clojure">{:find [?role (min ?age)]
+ :where [[_ :employee/role ?role]
+         [_ :employee/age ?age]]
+ :sort-by [(min ?age) :desc]
+ :limit 5}
+</code></pre>
+      <p>Aggregate expressions appear in parentheses (like a function call) in the find clause - the <code>(min ?age)</code> in this example. This query will return five biggest minimum ages for every job role in a database of employee data.</p>
+      <p>One feature of this system I'm particularly proud of is implicit grouping. Take a look at that find clause again: <code>[?role (min ?age)]</code>. We are asking for both a non-aggregated variable, <code>?role</code>, and an aggregated one <code>?age</code>. In a SQL query, we'd need to specify how construct groups of roles before we can find the minimum age of each group using a <code>GROUP BY</code> clause:</p>
+      <pre><code class="language-sql">SELECT role, min(age)
+FROM employees
+GROUP BY role
+</code></pre>
+      <p>The unifydDB query engine is smart enough to figure out that we need to group the result set by <code>role</code> before finding the minimum age of each group. If we add additional scalar or aggregate variables in the find clause, the query engine will automatically construct the appropriate groups such that all scalar variables have single values in each group.</p>
+      <h2>Entity-level transactions and "pull" queries</h2>
+      <p>unifyDB is technically a tuplestore - that is, its core unit of data is a "fact" tuple consisting of <code>[entity attribute value]</code> pairs. An entity is therefore represented as a set of data tuples:</p>
+      <pre><code class="language-clojure">[[1 :name "Ben Bitdiddle"]
+ [1 :age 43]
+ [1 :role "Software Engineer"]]
+</code></pre>
+      <p>This data format makes unifyDB highly flexible, able to answer not only questions about entities ("who has the software engineer role") but also questions about attributes ("what's the median age across all employees") and values. However, this flexibility comes at a cost: most programs (and programmers!) think in terms of entities. They talk about data shaped more like this:</p>
+      <pre><code class="language-clojure">{:id 1
+ :name "Ben Bitdiddle"
+ :age 43
+ :role "Software Engineer"}
+</code></pre>
+      <p>Requiring developers to transform entity-oriented data into fact-oriented data to fit unifyDB's internal data model imposes unnecessary cognitive load and violates one of unifyDB's core principles: meet the programmer where they are. In answer to this I added two features: entity transactions and "pull" queries.</p>
+      <p>Entity transactions allow data to enter the database in the shape of an entity map rather than as a set of facts. Here's how that looks:</p>
+      <pre><code class="language-clojure">(transact! db
+ [{:unifydb/id "alyssa"
+   :name "Alyssa P. Hacker"
+   :age 37
+   :role {:title "Engineering Manager"
+          :salary 60000}}
+  {:unifydb/id "ben"
+   :name "Ben Bitdiddle"
+   :age 43
+   :supervisor "alyssa"
+   :role {:title "Software Engineer"
+          :salary 40000}}])
+</code></pre>
+      <p>This transaction creates four new entities in the database: two employees and two roles (note the use of temporary IDs to map relationships between entities in the transaction). This transaction would expand to a set of facts that looks like this:</p>
+      <pre><code class="language-clojure">[;; Alyssa
+ ["alyssa" :name "Alyssa P. Hacker"]
+ ["alyssa" :age 37]
+ ["alyssa" :role "role1"]
+ ;; Alyssa's role
+ ["role1" :title "Engineering Manager"]
+ ["role1" :salary 60000]
+ ;; Ben
+ ["ben" :name "Ben Bitdiddle"]
+ ["ben" :age 43]
+ ["ben" :supervisor "alyssa"]
+ ["ben" :role "role2"]
+ ;; Ben's role
+ ["role2" :title "software Engineer"]
+ ["role2" :salary 40000]]
+</code></pre>
+      <p>This set of facts then gets transacted into the database normally, resolving the temporary ids (<code>"alyssa"</code>, <code>"ben"</code>, <code>"role1"</code>, <code>"role2"</code>) and making the facts available to be queried. As you can see, nested entities get flattened to be their own fact sets as well. This transformation maintains the flexibility of a fact-oriented data architecture while allowing developers to think in entity-oriented terms. And of course, for data that isn't inherently entity-oriented, raw fact tuples can still be transacted as usual.</p>
+      <p>On the query side, the new "pull" feature adds a similarly entity-oriented way to make queries. This feature adds new syntax to the find clause that allows users to specify the shape of data they want to return. It's probably easiest to understand with an example:</p>
+      <pre><code class="language-clojure">{:find [(pull ?e [:name :age {:role [:title :salary]}])]
+ :where [[?e :name "Alyssa P. Hacker"]]}
+</code></pre>
+      <p>Given the data used in the entity transaction example above, this query would return:</p>
+      <pre><code class="language-clojure">[[{:name "Alyssa P. Hacker"
+   :age 37
+   :role {:title "Engineering Manager"
+          :salary 60000}}]]
+</code></pre>
+      <p>Let's pull apart the pull syntax (heh, see what I did there?). A pull query is a list of attributes to return, with nested entities represented as sub-maps within the list. So the query <code>(pull ?e [:name :age {:role [:title :salary]}])</code> is asking for the <code>:name</code> and <code>:age</code> values for some entity <code>?e</code>, as well as the <code>:title</code> and <code>:salary</code> attributes of the entity whose id is the value of <code>?e</code>'s <code>:role</code> attribute. This system effectively separates the logic of finding the entity you want (in this case "the entity with <code>:name</code> <code>"Alyssa P. Hacker"</code>") from the logic of specifying which attributes of that entity you care about. This system also returns the data in the entity-oriented format that the rest of your program is already using.</p>
+      <p>Taken together, these two new features allow unifyDB to function as a document store in addition to its existing utility as a tuplestore. That's a huge boost for its use as a general-purpose application database.</p>
+      <h2>unifyDB presentation at Boston Clojure Meetup</h2>
+      <p>I gave a talk on unifyDB for the <a href="https://www.meetup.com/Boston-Clojure-Group/">Boston Clojure Meetup</a>! Due to my aforementioned lack of blogging, this is now the most in-depth look at the database available. I covered a brief history of the project, gave a demo of its capabilities at the time of recording, and answered some questions about the codebase. Do note that this was recorded before I added most of the features discussed in this post, so parts of the demo are slightly out of date. But on the whole it's still a worthwhile showcase of some of unifyDB's core features.</p>
+      <p>Here's the full recording:</p>
+      <iframe style="margin: auto auto 2em auto;" width="560" height="315" src="https://www.youtube-nocookie.com/embed/hqQQyxeE-4Q" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      <h2>What's next?</h2>
+      <p>If you made it this far, thanks for sticking with me! I'm really excited about the improvements that came to unifyDB in 2021. But there's still quite a bit more to do before we can consider this thing released. In no particular order:</p>
+      <ul>
+        <li>the other flagship feature, built-in access management. Alongside historical queries (which is already implemented), this is the key problem I'm trying to solve with unifyDB. The access management feature will allow fine-grained access control, letting engineers enforce rules like "only authorized admins can see personally-identifying customer data" without needing to write custom code</li>
+        <li>a built-in distributed key-value store. Right now unifyDB sits on top of existing key-value stores to provide the persistence layer. Before I consider this project finished it'll need to ship with a built-in distributed persistence layer</li>
+        <li>codebase improvements: there are a number of changes I want to make to the existing codebase. On the top of this list is fixing my usage of the <a href="https://github.com/clj-commons/manifold">Manifold</a> library - it provides a nice async abstraction layer but in many places I'm turning an async call into a blocking call by unwrapping a Manifold <code>deferred</code> instead of mapping over it. I'd also like to add better error handling and more end-to-end tests</li>
+      </ul>
+      <p>Hopefully I'll be a bit more public with my development efforts in 2022. I'll try to post more frequent (and shorter!) blog posts. I'll also be posting more actively into the <a href="https://clojurians.zulipchat.com/#narrow/stream/295957-unifydb">#unifydb channel</a> on the Clojurians Zulip chat, so check that out if you want to follow my progress.</p>
+    </main>
+    <footer>© Jeremy Dormitzer 2020 - 2021</footer>
+    <link rel="preconnect" href="https://fonts.gstatic.com"><link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&#x26;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&#x26;display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/highlight/default.css">
+    <script src="/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
