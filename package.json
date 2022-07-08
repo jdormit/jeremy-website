@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "My personal website",
   "dependencies": {
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "moment-timezone": "^0.5.32",
     "obelix-plugin-excerpt": "^2.0.0",
     "obelix-plugin-typography": "^1.0.2",
