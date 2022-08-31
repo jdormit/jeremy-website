@@ -4,7 +4,7 @@
   "description": "My personal website",
   "dependencies": {
     "moment": "^2.29.1",
-    "moment-timezone": "^0.5.32",
+    "moment-timezone": "^0.5.35",
     "obelix-plugin-excerpt": "^2.0.0",
     "obelix-plugin-typography": "^1.0.2",
     "typography-theme-moraga": "^0.16.19"
